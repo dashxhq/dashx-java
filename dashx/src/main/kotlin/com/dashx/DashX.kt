@@ -152,17 +152,32 @@ class DashX private constructor(val instanceName: String) {
         }
     }
 
-    fun track(event: String, data: HashMap<String, String>? = hashMapOf()) {
+    fun track(event: String, uid: String?, data: HashMap<String, String>? = hashMapOf()) {
         val jsonData =
                 data?.toMap()?.let { Json.parseToJsonElement(JSONObject(it).toString()).jsonObject }
+
+        // Use the passed uid or else use the identified uid,
+        // and if that's null too, use the anonymuos uid if present,
+        // and if that's null too, generate a random uuid.
+        // Also, make sure to pass annonymous uid as null if a uid is present.
+        val accUid = uid ?: accountUid
+        var accAnonUid = accountAnonymousUid
+
+        if (accUid == null) {
+            if (accAnonUid == null) {
+                accAnonUid = generateAccountAnonymousUid()
+            } else {
+                accAnonUid = null
+            }
+        }
 
         val query =
                 TrackEvent(
                         variables =
                                 TrackEvent.Variables(
                                         TrackEventInput(
-                                                accountAnonymousUid = accountAnonymousUid,
-                                                accountUid = accountUid,
+                                                accountAnonymousUid = accAnonUid,
+                                                accountUid = accUid,
                                                 data = jsonData,
                                                 event = event
                                         )

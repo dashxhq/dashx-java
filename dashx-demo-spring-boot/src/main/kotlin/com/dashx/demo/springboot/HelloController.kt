@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController
 class HelloController(private val dashx: DashX) {
     @GetMapping("/")
     fun index(): String {
-        dashx.track("Test Event")
+        dashx.track("Test Event", null)
         return "Greetings from Spring Boot!"
     }
 }

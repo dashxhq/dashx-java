@@ -3,5 +3,6 @@
     "[kotlin]": {
         "editor.defaultFormatter": "fwcd.kotlin",
         "editor.formatOnSave": true
-    }
+    },
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
