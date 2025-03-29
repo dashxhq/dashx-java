@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.ktor.client.logging)
     implementation(libs.graphql.ktor.client)
     implementation(libs.kotlin.logging)
+    implementation(libs.logback.classic)
     implementation(libs.json)
 }
 
