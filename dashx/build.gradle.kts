@@ -1,6 +1,7 @@
 import com.expediagroup.graphql.plugin.gradle.config.GraphQLScalar
 import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
 import com.expediagroup.graphql.plugin.gradle.graphql
+import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -10,7 +11,7 @@ plugins {
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
 
-    `maven-publish`
+    alias(libs.plugins.gradle.maven.publish)
 
     signing
 }
@@ -58,55 +59,39 @@ graphql {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-
-            groupId = "com.dashx"
-            artifactId = "dashx"
-            version = "1.0.0"
-
-            pom {
-                name.set("DashX Java SDK")
-                description.set("DashX SDK for Java.")
-                url.set("https://github.com/dashxhq/dashx-java")
-
-                licenses {
-                    license {
-                        name.set("MIT License")
-                        url.set("https://github.com/dashxhq/dashx-java/blob/main/LICENSE")
-                    }
-                }
-
-                developers {
-                    developer {
-                        id.set("gulshan.dashx")
-                        name.set("Gulshan Dhingra")
-                    }
-                }
-
-                scm {
-                    connection.set("scm:git:github.com/dashxhq/dashx-java.git")
-                    developerConnection.set("scm:git:ssh://github.com/dashxhq/dashx-java.git")
-                    url.set("https://github.com/dashxhq/dashx-java")
-                }
-            }
-        }
-    }
-
-    repositories {
-        maven {
-            name = "sonatype"
-            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-            credentials {
-                username = findProperty("ossrhUsername") as String? ?: ""
-                password = findProperty("ossrhPassword") as String? ?: ""
-            }
-        }
-    }
+signing {
+    useGpgCmd()
+    sign(publishing.publications)
 }
 
-signing {
-    sign(publishing.publications["mavenJava"])
+mavenPublishing {
+    coordinates("com.dashx", "dashx", "1.0.0")
+
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
+
+    pom {
+        name.set("DashX Java SDK")
+        description.set("DashX SDK for Java.")
+        url.set("https://github.com/dashxhq/dashx-java")
+
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://github.com/dashxhq/dashx-java/blob/main/LICENSE")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("gulshan.dashx")
+                name.set("Gulshan Dhingra")
+            }
+        }
+
+        scm {
+            connection.set("scm:git:github.com/dashxhq/dashx-java.git")
+            developerConnection.set("scm:git:ssh://github.com/dashxhq/dashx-java.git")
+            url.set("https://github.com/dashxhq/dashx-java")
+        }
+    }
 }
