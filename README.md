@@ -1,6 +1,19 @@
 # DashX SDK for Java
 
-## Pre-requisites
+## Usage (Spring Boot)
+Add the following to your build `build.gradle.kts` file:
+
+```
+implementation("com.dashx:dashx:1.0.0")
+```
+
+In most cases, you might just need one instance of DashX and you can create a [Bean](https://docs.spring.io/spring-framework/reference/core/beans/java/bean-annotation.html) in your Spring Boot application to make it available in your controllers.
+
+Please refer to [DashXDemoSpringBootApplication.kt](dashx-demo-spring-boot/src/main/kotlin/com/dashx/demo/springboot/DashXDemoSpringBootApplication.kt) in the demo application for how to set it up. And refer to [HelloController.kt](dashx-demo-spring-boot/src/main/kotlin/com/dashx/demo/springboot/HelloController.kt) in the demo application for how to use the `dashx` bean.
+
+## Development
+
+### Prerequisites
 
 #### Java
 ```
@@ -17,14 +30,13 @@ curl -s "https://get.sdkman.io" | bash
 sdk install gradle 8.12
 ```
 
-## Development
-
 This project uses gradle wrapper, to initialize it, run:
 ```
 gradle wrapper
 ```
 
-Now, you can build the project using:
+### Running gradle tasks
+You can build the project using:
 ```
 gradle build
 ```
@@ -90,6 +102,13 @@ You can find more information regarding this [here](https://central.sonatype.org
 ```
 gpg-agent --daemon
 ```
+
+In order for GPG agent to work properly, you might need to put the following in your `~/.zshrc` file:
+```
+export GPG_TTY=$(tty)
+```
+
+Don't forget to run `source ~/.zshrc` after updating your `~/.zshrc` file.
 
 #### Setup publishing credentials
 To publish to Maven Central repository, you will first need to generate the user token in your Sonatype account. You can do so by clicking on the **User** icon in the top right corner -> View Account -> Generate User Token.
