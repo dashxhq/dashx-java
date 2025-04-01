@@ -65,7 +65,7 @@ signing {
 }
 
 mavenPublishing {
-    coordinates("com.dashx", "dashx", "1.0.0")
+    coordinates("com.dashx", "dashx-java", "1.0.0")
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
 

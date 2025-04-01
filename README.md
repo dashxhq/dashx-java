@@ -1,7 +1,7 @@
 # DashX SDK for Java
 
 ## Usage (Spring Boot)
-Add the following to your build `build.gradle.kts` file:
+Add the following to your `build.gradle.kts` file:
 
 ```
 implementation("com.dashx:dashx:1.0.0")
