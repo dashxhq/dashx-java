@@ -4,7 +4,7 @@
 Add the following to your `build.gradle.kts` file:
 
 ```
-implementation("com.dashx:dashx:1.0.0")
+implementation("com.dashx:dashx-java:1.0.0")
 ```
 
 In most cases, you might just need one instance of DashX and you can create a [Bean](https://docs.spring.io/spring-framework/reference/core/beans/java/bean-annotation.html) in your Spring Boot application to make it available in your controllers.
