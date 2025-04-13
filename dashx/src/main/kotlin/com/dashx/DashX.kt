@@ -1,8 +1,9 @@
 package com.dashx
 
+import com.dashx.graphql.SearchRecordsOptions
 import com.dashx.graphql.generated.*
 import com.dashx.graphql.generated.inputs.*
-import com.dashx.util.Config
+import com.dashx.graphql.toInput
 import com.expediagroup.graphql.client.serialization.GraphQLClientKotlinxSerializer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.*
@@ -14,6 +15,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import org.json.JSONObject
 
@@ -43,11 +45,11 @@ class DashX private constructor(val instanceName: String) {
 
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
-    fun configure(config: Config) {
+    fun configure(config: DashXConfig) {
         init(config)
     }
 
-    private fun init(config: Config) {
+    private fun init(config: DashXConfig) {
         this.baseURI = config.baseUri
         this.publicKey = config.publicKey
         this.privateKey = config.privateKey
@@ -194,6 +196,75 @@ class DashX private constructor(val instanceName: String) {
             }
 
             logger.debug { result.data?.trackEvent?.toString() }
+        }
+    }
+
+    fun getAsset(id: String) {
+        val query = GetAsset(variables = GetAsset.Variables(id = id))
+
+        coroutineScope.launch {
+            val result = graphqlClient.execute(query)
+
+            if (!result.errors.isNullOrEmpty()) {
+                val errors = result.errors?.toString()
+                logger.debug { errors }
+                return@launch
+            }
+
+            logger.debug { result.data?.asset?.toString() }
+        }
+    }
+
+    fun listAssets(
+            filter: JsonObject? = null,
+            order: JsonObject? = null,
+            limit: Int? = null,
+            page: Int? = null
+    ) {
+        val query =
+                ListAssets(
+                        variables =
+                                ListAssets.Variables(
+                                        filter = filter,
+                                        order = order,
+                                        limit = limit,
+                                        page = page
+                                )
+                )
+
+        coroutineScope.launch {
+            val result = graphqlClient.execute(query)
+
+            if (!result.errors.isNullOrEmpty()) {
+                val errors = result.errors?.toString()
+                logger.debug { errors }
+                return@launch
+            }
+
+            logger.debug { result.data?.assetsList?.toString() }
+        }
+    }
+
+    fun searchRecords(resource: String, options: SearchRecordsOptions?) {
+        val input =
+                if (options != null) {
+                    options.toInput(resource)
+                } else {
+                    SearchRecordsInput(resource = resource)
+                }
+
+        val query = SearchRecords(variables = SearchRecords.Variables(input = input))
+
+        coroutineScope.launch {
+            val result = graphqlClient.execute(query)
+
+            if (!result.errors.isNullOrEmpty()) {
+                val errors = result.errors?.toString()
+                logger.debug { errors }
+                return@launch
+            }
+
+            logger.debug { result.data?.searchRecords?.toString() }
         }
     }
 }

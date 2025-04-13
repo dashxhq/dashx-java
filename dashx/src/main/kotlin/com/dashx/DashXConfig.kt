@@ -1,9 +1,9 @@
-package com.dashx.util
+package com.dashx
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Config(
+data class DashXConfig(
         val baseUri: String = "https://api.dashx.com/graphql",
         val publicKey: String,
         val privateKey: String,

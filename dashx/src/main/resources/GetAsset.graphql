@@ -1,0 +1,18 @@
+query GetAsset($id: UUID!) {
+    asset(id: $id) {
+        id
+        resourceId
+        attributeId
+        uploaderId
+        name
+        mimeType
+        data
+        size
+        uploadStatus
+        uploadStatusReason
+        processingStatus
+        processingStatusReason
+        createdAt
+        updatedAt
+    }
+}

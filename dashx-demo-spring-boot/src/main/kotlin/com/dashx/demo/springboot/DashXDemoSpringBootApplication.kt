@@ -1,7 +1,7 @@
 package com.dashx.demo.springboot
 
 import com.dashx.DashX
-import com.dashx.util.Config as DashXConfig
+import com.dashx.DashXConfig
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
