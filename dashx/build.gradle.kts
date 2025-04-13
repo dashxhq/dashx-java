@@ -54,7 +54,10 @@ graphql {
         endpoint = "https://api.dashx-staging.com/graphql"
         packageName = "com.dashx.graphql.generated"
 
-        customScalars = listOf(GraphQLScalar("JSON", "kotlinx.serialization.json.JsonObject", "com.dashx.graphql.scalars.converters.JsonScalarConverter"))
+        customScalars =
+            listOf(
+                GraphQLScalar("JSON", "kotlinx.serialization.json.JsonObject", "com.dashx.graphql.scalars.converters.JsonScalarConverter"),
+            )
         serializer = GraphQLSerializer.KOTLINX
     }
 }

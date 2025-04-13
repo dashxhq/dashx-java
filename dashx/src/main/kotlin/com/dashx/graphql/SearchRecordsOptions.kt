@@ -10,12 +10,24 @@ import kotlinx.serialization.json.JsonObject
 
 @Serializable
 public data class SearchRecordsOptions(
-        public val exclude: List<@Serializable(with = JsonObjectSerializer::class) JsonObject>? =
+        public val exclude:
+                List<
+                        @Serializable(with = JsonObjectSerializer::class)
+                        JsonObject,
+                >? =
                 null,
-        public val fields: List<@Serializable(with = JsonObjectSerializer::class) JsonObject>? =
+        public val fields:
+                List<
+                        @Serializable(with = JsonObjectSerializer::class)
+                        JsonObject,
+                >? =
                 null,
         @Serializable(with = JsonObjectSerializer::class) public val filter: JsonObject? = null,
-        public val include: List<@Serializable(with = JsonObjectSerializer::class) JsonObject>? =
+        public val include:
+                List<
+                        @Serializable(with = JsonObjectSerializer::class)
+                        JsonObject,
+                >? =
                 null,
         public val language: String? = null,
         public val limit: Int? = null,

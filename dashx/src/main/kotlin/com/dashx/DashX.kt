@@ -26,16 +26,18 @@ import org.json.JSONObject
 
 private val logger = KotlinLogging.logger {}
 
-class DashX private constructor(val instanceName: String) {
+class DashX
+private constructor(
+        val instanceName: String,
+) {
     companion object {
         private val instances: MutableMap<String, DashX> = mutableMapOf()
 
         @JvmStatic fun getInstance(): DashX = getInstance("default")
 
         @JvmStatic
-        fun getInstance(instanceName: String): DashX {
-            return instances.getOrPut(instanceName) { DashX(instanceName) }
-        }
+        fun getInstance(instanceName: String): DashX =
+                instances.getOrPut(instanceName) { DashX(instanceName) }
     }
 
     // Setup variables
@@ -96,13 +98,11 @@ class DashX private constructor(val instanceName: String) {
         return DashXGraphQLKtorClient(
                 url = URI(baseURI ?: "https://api.dashx.com/graphql").toURL(),
                 httpClient = httpClient,
-                serializer = GraphQLClientKotlinxSerializer()
+                serializer = GraphQLClientKotlinxSerializer(),
         )
     }
 
-    private fun generateAccountAnonymousUid(): String {
-        return UUID.randomUUID().toString()
-    }
+    private fun generateAccountAnonymousUid(): String = UUID.randomUUID().toString()
 
     /**
      * Identifies a user with the provided options.
@@ -124,8 +124,8 @@ class DashX private constructor(val instanceName: String) {
 
             future.completeExceptionally(
                     RuntimeException(
-                            "'identify' cannot be called with null, please pass options of type 'object'."
-                    )
+                            "'identify' cannot be called with null, please pass options of type 'object'.",
+                    ),
             )
             return future
         }
@@ -133,8 +133,13 @@ class DashX private constructor(val instanceName: String) {
         val uid = options[UserAttributes.UID] ?: this.accountUid
         val anonymousUid =
                 options[UserAttributes.ANONYMOUS_UID]
-                        ?: if (this.accountAnonymousUid != null) this.accountAnonymousUid
-                        else if (uid == null) generateAccountAnonymousUid() else null
+                        ?: if (this.accountAnonymousUid != null) {
+                            this.accountAnonymousUid
+                        } else if (uid == null) {
+                            generateAccountAnonymousUid()
+                        } else {
+                            null
+                        }
 
         val query =
                 IdentifyAccount(
@@ -147,9 +152,9 @@ class DashX private constructor(val instanceName: String) {
                                                 phone = options[UserAttributes.PHONE],
                                                 name = options[UserAttributes.NAME],
                                                 firstName = options[UserAttributes.FIRST_NAME],
-                                                lastName = options[UserAttributes.LAST_NAME]
-                                        )
-                                )
+                                                lastName = options[UserAttributes.LAST_NAME],
+                                        ),
+                                ),
                 )
 
         coroutineScope.launch {
@@ -159,7 +164,7 @@ class DashX private constructor(val instanceName: String) {
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}")
+                            RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.identifyAccount)
@@ -188,7 +193,7 @@ class DashX private constructor(val instanceName: String) {
     fun track(
             event: String,
             uid: String? = null,
-            data: HashMap<String, String>? = hashMapOf()
+            data: HashMap<String, String>? = hashMapOf(),
     ): CompletableFuture<TrackEventResponse?> {
         val future = CompletableFuture<TrackEventResponse?>()
         val jsonData =
@@ -217,9 +222,9 @@ class DashX private constructor(val instanceName: String) {
                                                 accountAnonymousUid = accAnonUid,
                                                 accountUid = accUid,
                                                 data = jsonData,
-                                                event = event
-                                        )
-                                )
+                                                event = event,
+                                        ),
+                                ),
                 )
 
         coroutineScope.launch {
@@ -229,7 +234,7 @@ class DashX private constructor(val instanceName: String) {
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}")
+                            RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.trackEvent)
@@ -264,7 +269,7 @@ class DashX private constructor(val instanceName: String) {
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}")
+                            RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.asset?.toAsset())
@@ -295,7 +300,7 @@ class DashX private constructor(val instanceName: String) {
             filter: JsonObject? = null,
             order: JsonObject? = null,
             limit: Int? = null,
-            page: Int? = null
+            page: Int? = null,
     ): CompletableFuture<List<Asset>?> {
         val future = CompletableFuture<List<Asset>?>()
         val query =
@@ -305,8 +310,8 @@ class DashX private constructor(val instanceName: String) {
                                         filter = filter,
                                         order = order,
                                         limit = limit,
-                                        page = page
-                                )
+                                        page = page,
+                                ),
                 )
 
         coroutineScope.launch {
@@ -316,7 +321,7 @@ class DashX private constructor(val instanceName: String) {
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}")
+                            RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.assetsList?.map { it.toAsset() })
@@ -369,7 +374,7 @@ class DashX private constructor(val instanceName: String) {
      */
     fun searchRecords(
             resource: String,
-            options: SearchRecordsOptions? = null
+            options: SearchRecordsOptions? = null,
     ): CompletableFuture<List<JsonObject>> {
         val future = CompletableFuture<List<JsonObject>>()
         val input = options?.toInput(resource) ?: SearchRecordsInput(resource = resource)
@@ -382,7 +387,7 @@ class DashX private constructor(val instanceName: String) {
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}")
+                            RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.searchRecords ?: emptyList())
