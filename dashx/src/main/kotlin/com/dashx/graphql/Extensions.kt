@@ -1,6 +1,9 @@
 package com.dashx.graphql
 
+import com.dashx.graphql.generated.getasset.Asset as GetAssetResult
 import com.dashx.graphql.generated.inputs.SearchRecordsInput
+import com.dashx.graphql.generated.listassets.Asset as ListAssetsResult
+import com.dashx.graphql.models.Asset
 
 fun SearchRecordsOptions.toInput(resource: String): SearchRecordsInput {
     return SearchRecordsInput(
@@ -14,5 +17,43 @@ fun SearchRecordsOptions.toInput(resource: String): SearchRecordsInput {
             page = this.page,
             preview = this.preview,
             resource = resource
+    )
+}
+
+fun GetAssetResult.toAsset(): Asset {
+    return Asset(
+            id = this.id,
+            resourceId = this.resourceId,
+            attributeId = this.attributeId,
+            uploaderId = this.uploaderId,
+            name = this.name,
+            mimeType = this.mimeType,
+            data = this.data,
+            size = this.size,
+            uploadStatus = this.uploadStatus,
+            uploadStatusReason = this.uploadStatusReason,
+            processingStatus = this.processingStatus,
+            processingStatusReason = this.processingStatusReason,
+            createdAt = this.createdAt,
+            updatedAt = this.updatedAt
+    )
+}
+
+fun ListAssetsResult.toAsset(): Asset {
+    return Asset(
+            id = this.id,
+            resourceId = this.resourceId,
+            attributeId = this.attributeId,
+            uploaderId = this.uploaderId,
+            name = this.name,
+            mimeType = this.mimeType,
+            data = this.data,
+            size = this.size,
+            uploadStatus = this.uploadStatus,
+            uploadStatusReason = this.uploadStatusReason,
+            processingStatus = this.processingStatus,
+            processingStatusReason = this.processingStatusReason,
+            createdAt = this.createdAt,
+            updatedAt = this.updatedAt
     )
 }

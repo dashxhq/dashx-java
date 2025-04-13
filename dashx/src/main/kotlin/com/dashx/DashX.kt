@@ -2,7 +2,11 @@ package com.dashx
 
 import com.dashx.graphql.SearchRecordsOptions
 import com.dashx.graphql.generated.*
+import com.dashx.graphql.generated.identifyaccount.Account
 import com.dashx.graphql.generated.inputs.*
+import com.dashx.graphql.generated.trackevent.TrackEventResponse
+import com.dashx.graphql.models.Asset
+import com.dashx.graphql.toAsset
 import com.dashx.graphql.toInput
 import com.expediagroup.graphql.client.serialization.GraphQLClientKotlinxSerializer
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -12,6 +16,7 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import java.net.URI
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
@@ -99,31 +104,37 @@ class DashX private constructor(val instanceName: String) {
         return UUID.randomUUID().toString()
     }
 
-    fun identify(options: HashMap<String, String>? = null) {
+    /**
+     * Identifies a user with the provided options.
+     *
+     * @param options User identification options
+     * @return A CompletableFuture that will be completed with the identification result or
+     * completed exceptionally
+     * ```
+     *         if there are GraphQL errors or execution errors
+     * ```
+     */
+    fun identify(options: HashMap<String, String>? = null): CompletableFuture<Account?> {
+        val future = CompletableFuture<Account?>()
+
         if (options == null) {
             logger.debug {
                 "'identify' cannot be called with null, please pass options of type 'object'."
             }
-            return
+
+            future.completeExceptionally(
+                    RuntimeException(
+                            "'identify' cannot be called with null, please pass options of type 'object'."
+                    )
+            )
+            return future
         }
 
-        val uid =
-                if (options.containsKey(UserAttributes.UID)) {
-                    options[UserAttributes.UID]
-                } else {
-                    this.accountUid
-                }
-
+        val uid = options[UserAttributes.UID] ?: this.accountUid
         val anonymousUid =
-                if (options.containsKey(UserAttributes.ANONYMOUS_UID)) {
-                    options[UserAttributes.ANONYMOUS_UID]
-                } else if (this.accountAnonymousUid != null) {
-                    this.accountAnonymousUid
-                } else if (uid == null) {
-                    generateAccountAnonymousUid()
-                } else {
-                    null
-                }
+                options[UserAttributes.ANONYMOUS_UID]
+                        ?: if (this.accountAnonymousUid != null) this.accountAnonymousUid
+                        else if (uid == null) generateAccountAnonymousUid() else null
 
         val query =
                 IdentifyAccount(
@@ -142,19 +153,44 @@ class DashX private constructor(val instanceName: String) {
                 )
 
         coroutineScope.launch {
-            val result = graphqlClient.execute(query)
+            try {
+                val result = graphqlClient.execute(query)
+                if (!result.errors.isNullOrEmpty()) {
+                    logger.debug { result.errors.toString() }
 
-            if (!result.errors.isNullOrEmpty()) {
-                val errors = result.errors?.toString() ?: ""
-                logger.debug { errors }
-                return@launch
+                    future.completeExceptionally(
+                            RuntimeException("GraphQL errors: ${result.errors}")
+                    )
+                } else {
+                    future.complete(result.data?.identifyAccount)
+                }
+            } catch (e: Exception) {
+                logger.error(e) { "Error executing identify query." }
+
+                future.completeExceptionally(e)
             }
-
-            logger.debug { result.data?.identifyAccount?.toString() }
         }
+        return future
     }
 
-    fun track(event: String, uid: String?, data: HashMap<String, String>? = hashMapOf()) {
+    /**
+     * Tracks an event for a user.
+     *
+     * @param event The event name (event type)
+     * @param uid Optional user ID
+     * @param data Optional event data
+     * @return A CompletableFuture that will be completed with the tracking result or completed
+     * exceptionally
+     * ```
+     *         if there are GraphQL errors or execution errors
+     * ```
+     */
+    fun track(
+            event: String,
+            uid: String? = null,
+            data: HashMap<String, String>? = hashMapOf()
+    ): CompletableFuture<TrackEventResponse?> {
+        val future = CompletableFuture<TrackEventResponse?>()
         val jsonData =
                 data?.toMap()?.let { Json.parseToJsonElement(JSONObject(it).toString()).jsonObject }
 
@@ -187,40 +223,81 @@ class DashX private constructor(val instanceName: String) {
                 )
 
         coroutineScope.launch {
-            val result = graphqlClient.execute(query)
+            try {
+                val result = graphqlClient.execute(query)
+                if (!result.errors.isNullOrEmpty()) {
+                    logger.debug { result.errors.toString() }
 
-            if (!result.errors.isNullOrEmpty()) {
-                val errors = result.errors?.toString()
-                logger.debug { errors }
-                return@launch
+                    future.completeExceptionally(
+                            RuntimeException("GraphQL errors: ${result.errors}")
+                    )
+                } else {
+                    future.complete(result.data?.trackEvent)
+                }
+            } catch (e: Exception) {
+                logger.error(e) { "Error executing track query." }
+
+                future.completeExceptionally(e)
             }
-
-            logger.debug { result.data?.trackEvent?.toString() }
         }
+        return future
     }
 
-    fun getAsset(id: String) {
+    /**
+     * Retrieves an asset by its ID.
+     *
+     * @param id The asset ID
+     * @return A CompletableFuture that will be completed with the asset result or completed
+     * exceptionally
+     * ```
+     *         if there are GraphQL errors or execution errors
+     * ```
+     */
+    fun getAsset(id: String): CompletableFuture<Asset?> {
+        val future = CompletableFuture<Asset?>()
         val query = GetAsset(variables = GetAsset.Variables(id = id))
 
         coroutineScope.launch {
-            val result = graphqlClient.execute(query)
+            try {
+                val result = graphqlClient.execute(query)
+                if (!result.errors.isNullOrEmpty()) {
+                    logger.debug { result.errors.toString() }
 
-            if (!result.errors.isNullOrEmpty()) {
-                val errors = result.errors?.toString()
-                logger.debug { errors }
-                return@launch
+                    future.completeExceptionally(
+                            RuntimeException("GraphQL errors: ${result.errors}")
+                    )
+                } else {
+                    future.complete(result.data?.asset?.toAsset())
+                }
+            } catch (e: Exception) {
+                logger.error(e) { "Error executing getAsset query." }
+
+                future.completeExceptionally(e)
             }
-
-            logger.debug { result.data?.asset?.toString() }
         }
+        return future
     }
 
+    /**
+     * Lists assets with optional filtering and pagination.
+     *
+     * @param filter Optional filter criteria
+     * @param order Optional ordering criteria
+     * @param limit Optional maximum number of results
+     * @param page Optional page number for pagination
+     * @return A CompletableFuture that will be completed with the list of assets or completed
+     * exceptionally
+     * ```
+     *         if there are GraphQL errors or execution errors
+     * ```
+     */
     fun listAssets(
             filter: JsonObject? = null,
             order: JsonObject? = null,
             limit: Int? = null,
             page: Int? = null
-    ) {
+    ): CompletableFuture<List<Asset>?> {
+        val future = CompletableFuture<List<Asset>?>()
         val query =
                 ListAssets(
                         variables =
@@ -233,38 +310,89 @@ class DashX private constructor(val instanceName: String) {
                 )
 
         coroutineScope.launch {
-            val result = graphqlClient.execute(query)
+            try {
+                val result = graphqlClient.execute(query)
+                if (!result.errors.isNullOrEmpty()) {
+                    logger.debug { result.errors.toString() }
 
-            if (!result.errors.isNullOrEmpty()) {
-                val errors = result.errors?.toString()
-                logger.debug { errors }
-                return@launch
+                    future.completeExceptionally(
+                            RuntimeException("GraphQL errors: ${result.errors}")
+                    )
+                } else {
+                    future.complete(result.data?.assetsList?.map { it.toAsset() })
+                }
+            } catch (e: Exception) {
+                logger.error(e) { "Error executing listAssets query." }
+
+                future.completeExceptionally(e)
             }
-
-            logger.debug { result.data?.assetsList?.toString() }
         }
+        return future
     }
 
-    fun searchRecords(resource: String, options: SearchRecordsOptions?) {
-        val input =
-                if (options != null) {
-                    options.toInput(resource)
-                } else {
-                    SearchRecordsInput(resource = resource)
-                }
-
+    /**
+     * Searches records for a given resource with optional search parameters.
+     *
+     * @param resource The resource identifier to search (e.g., "users", "products")
+     * @param options Optional search parameters like filters, sorting, pagination
+     * @return A CompletableFuture that will be completed with the search results or completed
+     * exceptionally
+     * ```
+     *         if there are GraphQL errors or execution errors
+     *
+     * @example
+     * ```kotlin
+     * ```
+     * // Kotlin usage dashX.searchRecords("users", options)
+     * ```
+     *     .thenAccept { result ->
+     *         // Handle successful result
+     *     }
+     *     .exceptionally { error ->
+     *         // Handle error
+     *         null
+     *     }
+     * ```
+     * ```
+     * @example
+     * ```java
+     * // Java usage
+     * dashX.searchRecords("users", options)
+     *     .thenAccept(result -> {
+     *         // Handle successful result
+     *     })
+     *     .exceptionally(error -> {
+     *         // Handle error
+     *         return null;
+     *     });
+     * ```
+     */
+    fun searchRecords(
+            resource: String,
+            options: SearchRecordsOptions? = null
+    ): CompletableFuture<List<JsonObject>> {
+        val future = CompletableFuture<List<JsonObject>>()
+        val input = options?.toInput(resource) ?: SearchRecordsInput(resource = resource)
         val query = SearchRecords(variables = SearchRecords.Variables(input = input))
 
         coroutineScope.launch {
-            val result = graphqlClient.execute(query)
+            try {
+                val result = graphqlClient.execute(query)
+                if (!result.errors.isNullOrEmpty()) {
+                    logger.debug { result.errors.toString() }
 
-            if (!result.errors.isNullOrEmpty()) {
-                val errors = result.errors?.toString()
-                logger.debug { errors }
-                return@launch
+                    future.completeExceptionally(
+                            RuntimeException("GraphQL errors: ${result.errors}")
+                    )
+                } else {
+                    future.complete(result.data?.searchRecords ?: emptyList())
+                }
+            } catch (e: Exception) {
+                logger.error(e) { "Error executing searchRecords query." }
+
+                future.completeExceptionally(e)
             }
-
-            logger.debug { result.data?.searchRecords?.toString() }
         }
+        return future
     }
 }
