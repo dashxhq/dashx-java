@@ -56,24 +56,52 @@ dashx.base-url=https://...
 The DashX client will be automatically configured and available for injection in your Spring components:
 
 ```kotlin
-import com.dashx.DashX as DashXClient
+import com.dashx.DashX
 ...
 
 @RestController
-class MyController(private val dashXClient: DashXClient) {
+class MyController(private val dashX: DashX) {
 
     @GetMapping("/login")
     fun login(...) {
         ...
-        dashXClient.identify(userId)
+        dashX.identify(userId)
         ...
     }
 
     @GetMapping("/add-to-cart")
     fun addToCart(...) {
         ...
-        dashXClient.track("Item Added to Cart")
+        dashX.track("Item Added to Cart")
         ...
+    }
+
+    @GetMapping("/products")
+    suspend fun products(
+        @RequestParam(required = false) productId: String?,
+        @RequestParam(required = false, defaultValue = "20") limit: Int
+    ): String {
+        val result =
+            dashX
+                .listAssets(
+                    filter =
+                        buildJsonObject {
+                            if (productId != null) {
+                                put("resourceId", buildJsonObject { put("eq", productId) })
+                            }
+                        },
+                    limit = limit,
+                )
+                .await()
+
+        return """
+            <div>
+                ${result?.filter { it.url != null }?.joinToString("<br />") { asset ->
+                    """<a href="${asset.url}">${asset.name}</a>"""
+                } ?: "No assets found"}
+            </div>
+        """
+            .trimIndent()
     }
 }
 ```

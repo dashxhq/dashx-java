@@ -1,6 +1,6 @@
 package com.dashx.demo.springboot
 
-import com.dashx.DashX as DashXClient
+import com.dashx.DashX
 import kotlinx.coroutines.future.await
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class HelloController(private val dashx: DashXClient) {
+class HelloController(private val dashX: DashX) {
     @GetMapping("/hello")
     fun hello(): String {
-        dashx.track(event = "hello", null, hashMapOf("message" to "Hello, World!"))
+        dashX.track(event = "hello", null, hashMapOf("message" to "Hello, World!"))
 
         return "Hello, World!"
     }
@@ -23,7 +23,7 @@ class HelloController(private val dashx: DashXClient) {
         @RequestParam(required = false, defaultValue = "20") limit: Int
     ): String {
         val result =
-            dashx
+            dashX
                 .listAssets(
                     filter =
                         buildJsonObject {
