@@ -71,7 +71,7 @@ mavenPublishing {
 
     pom {
         name.set("DashX Java SDK")
-        description.set("DashX SDK for Java.")
+        description.set("DashX SDK for Java")
         url.set("https://github.com/dashxhq/dashx-java")
 
         licenses {
