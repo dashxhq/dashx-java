@@ -41,14 +41,14 @@ Add the following properties to your `application.properties` or `application.ym
 # Required: Your DashX public key
 dashx.public-key=your-public-key-here
 
-# Optional: Your DashX private key (if needed for specific operations)
+# Required: Your DashX private key
 dashx.private-key=your-private-key-here
 
 # Optional: Target environment (e.g., "production", "staging")
 dashx.target-environment=production
 
-# Optional: Override the default base URL (defaults to https://api.dashx.com/graphql)
-dashx.base-url=https://api.dashx-staging.com/graphql
+# Optional: Override the default base URL to connect to DashX
+dashx.base-url=https://...
 ```
 
 ## Usage
