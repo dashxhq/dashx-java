@@ -1,8 +1,6 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "[kotlin]": {
-        "editor.defaultFormatter": "fwcd.kotlin",
-        "editor.formatOnSave": true
-    },
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "editor.detectIndentation": false,
+    "editor.tabSize": 4
 }

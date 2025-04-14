@@ -1,41 +1,36 @@
 plugins {
-	kotlin("jvm") version "2.0.0"
-	kotlin("plugin.spring") version "1.9.25"
-	id("org.springframework.boot") version "3.4.1"
-	id("io.spring.dependency-management") version "1.1.7"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.spring)
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.ktfmt)
 }
 
-group = "com.dashx.demo.springboot"
-version = "0.0.1-SNAPSHOT"
+val group = libs.versions.group.get()
+val version = libs.versions.dashx.get()
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
-}
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
-repositories {
-	mavenCentral()
-}
+repositories { mavenCentral() }
+
+kotlin { compilerOptions { freeCompilerArgs.addAll("-Xjsr305=strict") } }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("me.paulschwarz:spring-dotenv:4.0.0")
-	implementation(project(":dashx"))
+    implementation(project(":dashx-spring-boot-starter"))
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("me.paulschwarz:spring-dotenv:4.0.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-test")
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-kotlin {
-	compilerOptions {
-		freeCompilerArgs.addAll("-Xjsr305=strict")
-	}
+ktfmt {
+    blockIndent.set(4)
+    continuationIndent.set(4)
 }
 
-tasks.withType<Test> {
-	useJUnitPlatform()
-}
+tasks.withType<Test> { useJUnitPlatform() }

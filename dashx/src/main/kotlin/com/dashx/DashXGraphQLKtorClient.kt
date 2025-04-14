@@ -25,52 +25,51 @@ private val logger = KotlinLogging.logger {}
 
 /** A lightweight typesafe GraphQL HTTP client using Ktor HTTP client engine. */
 class DashXGraphQLKtorClient(
-        private val url: URL,
-        private val httpClient: HttpClient = HttpClient(engineFactory = CIO),
-        private val serializer: GraphQLClientSerializer = defaultGraphQLSerializer()
+    private val url: URL,
+    private val httpClient: HttpClient = HttpClient(engineFactory = CIO),
+    private val serializer: GraphQLClientSerializer = defaultGraphQLSerializer(),
 ) : GraphQLClient<HttpRequestBuilder>, Closeable {
     override val automaticPersistedQueriesSettings: AutomaticPersistedQueriesSettings =
-            AutomaticPersistedQueriesSettings()
+        AutomaticPersistedQueriesSettings()
 
     override suspend fun <T : Any> execute(
-            request: GraphQLClientRequest<T>,
-            requestCustomizer: HttpRequestBuilder.() -> Unit
-    ): GraphQLClientResponse<T> {
-        return try {
+        request: GraphQLClientRequest<T>,
+        requestCustomizer: HttpRequestBuilder.() -> Unit,
+    ): GraphQLClientResponse<T> =
+        try {
             val rawResult =
-                    httpClient.post(url) {
-                        expectSuccess = true
-                        apply(requestCustomizer)
-                        setBody(
-                                TextContent(
-                                        serializer.serialize(request),
-                                        ContentType.Application.Json
-                                )
-                        )
-                    }
+                httpClient.post(url) {
+                    expectSuccess = true
+                    apply(requestCustomizer)
+                    setBody(
+                        TextContent(
+                            serializer.serialize(request),
+                            ContentType.Application.Json,
+                        ),
+                    )
+                }
             serializer.deserialize(parseGraphQLResult(rawResult), request.responseType())
         } catch (e: Exception) {
             KotlinxGraphQLResponse(null, listOf(KotlinxGraphQLError(e.message ?: "")))
         }
-    }
 
     override suspend fun execute(
-            requests: List<GraphQLClientRequest<*>>,
-            requestCustomizer: HttpRequestBuilder.() -> Unit
+        requests: List<GraphQLClientRequest<*>>,
+        requestCustomizer: HttpRequestBuilder.() -> Unit,
     ): List<GraphQLClientResponse<*>> {
         val rawResult: String =
-                httpClient
-                        .post(url) {
-                            expectSuccess = true
-                            apply(requestCustomizer)
-                            setBody(
-                                    TextContent(
-                                            serializer.serialize(requests),
-                                            ContentType.Application.Json
-                                    )
-                            )
-                        }
-                        .body()
+            httpClient
+                .post(url) {
+                    expectSuccess = true
+                    apply(requestCustomizer)
+                    setBody(
+                        TextContent(
+                            serializer.serialize(requests),
+                            ContentType.Application.Json,
+                        ),
+                    )
+                }
+                .body()
         return serializer.deserialize(rawResult, requests.map { it.responseType() })
     }
 

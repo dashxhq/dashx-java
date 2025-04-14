@@ -2,13 +2,19 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
+dashx = "1.1.0"
+group = "com.dashx"
+
 gradle-maven-publish = "0.31.0"
 graphql-ktor-client = "8.2.1"
 guava = "33.3.1-jre"
 junit-jupiter-engine = "5.11.1"
 kotlin = "2.0.21"
 kotlinx = "1.7.3"
+ktfmt = "0.22.0"
 ktor = "3.0.2"
+spring-boot = "3.4.1"
+spring-dependency-management = "1.1.7"
 
 [libraries]
 graphql-ktor-client = { module = "com.expediagroup:graphql-kotlin-ktor-client", version.ref = "graphql-ktor-client" }
@@ -22,9 +28,15 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.16" }
+spring-boot-autoconfigure = { group = "org.springframework.boot", name = "spring-boot-autoconfigure", version.ref = "spring-boot" }
 
 [plugins]
 gradle-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "gradle-maven-publish" }
 graphql = { id = "com.expediagroup.graphql", version.ref = "graphql-ktor-client" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-plugin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-boot-autoconfigure = { id = "org.springframework.boot.autoconfigure", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }

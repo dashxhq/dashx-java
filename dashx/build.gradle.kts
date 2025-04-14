@@ -3,22 +3,23 @@ import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
 import com.expediagroup.graphql.plugin.gradle.graphql
 import com.vanniktech.maven.publish.SonatypeHost
 
+val group = libs.versions.group.get()
+val artifactId = "dashx-java"
+val version = libs.versions.dashx.get()
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.graphql)
-
-    // Apply the java-library plugin for API and implementation separation.
-    `java-library`
-
     alias(libs.plugins.gradle.maven.publish)
+    alias(libs.plugins.ktfmt)
 
-    signing
+    id("signing")
 }
 
-repositories {
-    mavenCentral()
-}
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+
+repositories { mavenCentral() }
 
 dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
@@ -37,13 +38,6 @@ dependencies {
     implementation(libs.json)
 }
 
-// Apply a specific Java toolchain to ease working on different environments.
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
@@ -54,7 +48,13 @@ graphql {
         endpoint = "https://api.dashx-staging.com/graphql"
         packageName = "com.dashx.graphql.generated"
 
-        customScalars = listOf(GraphQLScalar("JSON", "kotlinx.serialization.json.JsonObject", "com.dashx.graphql.scalars.converters.JsonScalarConverter"))
+        customScalars =
+            listOf(
+                GraphQLScalar(
+                    "JSON",
+                    "kotlinx.serialization.json.JsonObject",
+                    "com.dashx.graphql.scalars.converters.JsonScalarConverter"),
+            )
         serializer = GraphQLSerializer.KOTLINX
     }
 }
@@ -65,7 +65,7 @@ signing {
 }
 
 mavenPublishing {
-    coordinates("com.dashx", "dashx-java", "1.0.0")
+    coordinates(group, artifactId, version)
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
 
@@ -94,4 +94,9 @@ mavenPublishing {
             url.set("https://github.com/dashxhq/dashx-java")
         }
     }
+}
+
+ktfmt {
+    blockIndent.set(4)
+    continuationIndent.set(4)
 }
