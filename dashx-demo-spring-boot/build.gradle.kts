@@ -13,6 +13,8 @@ java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
 repositories { mavenCentral() }
 
+kotlin { compilerOptions { freeCompilerArgs.addAll("-Xjsr305=strict") } }
+
 dependencies {
     implementation(project(":dashx-spring-boot-starter"))
     implementation("org.springframework.boot:spring-boot-starter-web")
