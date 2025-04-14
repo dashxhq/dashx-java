@@ -59,25 +59,21 @@ The DashX client will be automatically configured and available for injection in
 @RestController
 class MyController(private val dashxClient: DashxClient) {
 
-    @GetMapping("/identify")
-    fun identifyUser(@RequestParam userId: String) {
+    @GetMapping("/login")
+    fun login(...) {
+        ...
         dashxClient.identify(userId)
+        ...
     }
 
-    @GetMapping("/track")
-    fun trackEvent(@RequestParam eventName: String) {
-        dashxClient.track(eventName)
+    @GetMapping("/add-to-cart")
+    fun addToCart(...) {
+        ...
+        dashxClient.track("Item Added to Cart")
+        ...
     }
 }
 ```
-
-## Available Methods
-
-The `DashxClient` provides the following methods:
-
-- `identify(userId: String, traits: Map<String, Any>? = null)`: Identify a user
-- `track(eventName: String, properties: Map<String, Any>? = null)`: Track an event
-- `reset()`: Reset the user's identity
 
 ## Example
 
