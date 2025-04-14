@@ -2,7 +2,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-dashx = "1.1.0"
+dashx = "1.1.1"
 group = "com.dashx"
 
 gradle-maven-publish = "0.31.0"

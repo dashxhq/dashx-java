@@ -21,6 +21,11 @@ dependencies {
     implementation("me.paulschwarz:spring-dotenv:4.0.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
+    implementation("org.reactivestreams:reactive-streams:1.0.4")
+    implementation("io.projectreactor:reactor-core:3.6.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-test")

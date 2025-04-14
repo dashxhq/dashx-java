@@ -82,21 +82,7 @@ class DashXGraphQLKtorClient(
         val resultJsonObject = JSONObject(rawResultBody)
 
         if (resultJsonObject.get(DATA) != null) {
-            val dataObject = resultJsonObject.getJSONObject(DATA)
-            val dataObjectKeys = dataObject.keys()
-
-            val graphqlKey = dataObjectKeys.next() as String
-            val graphqlDataObject = dataObject.getJSONObject(graphqlKey)
-            val graphqlDataIterator = graphqlDataObject.keys()
-
-            while (graphqlDataIterator.hasNext()) {
-                val key = graphqlDataIterator.next() as String
-                if (graphqlDataObject.get(key).javaClass == JSONObject::class.java) {
-                    graphqlDataObject.put(key, graphqlDataObject.get(key).toString())
-                }
-            }
-            dataObject.put(graphqlKey, graphqlDataObject)
-            resultJsonObject.put(DATA, dataObject)
+            resultJsonObject.get(DATA).toString()
         }
 
         return resultJsonObject.toString()
