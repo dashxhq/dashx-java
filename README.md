@@ -1,15 +1,11 @@
 # DashX SDK for Java
 
-## Usage (Spring Boot)
-Add the following to your `build.gradle.kts` file:
+## Usage
+### DashX for Spring Boot
 
-```
-implementation("com.dashx:dashx-java:1.0.0")
-```
+[dashx-spring-boot-starter](dashx-spring-boot-starter) is the fastest way to integrate with DashX in your Spring Boot applications.
 
-In most cases, you might just need one instance of DashX and you can create a [Bean](https://docs.spring.io/spring-framework/reference/core/beans/java/bean-annotation.html) in your Spring Boot application to make it available in your controllers.
-
-Please refer to [DashXDemoSpringBootApplication.kt](dashx-demo-spring-boot/src/main/kotlin/com/dashx/demo/springboot/DashXDemoSpringBootApplication.kt) in the demo application for how to set it up. And refer to [HelloController.kt](dashx-demo-spring-boot/src/main/kotlin/com/dashx/demo/springboot/HelloController.kt) in the demo application for how to use the `dashx` bean.
+See the [dashx-demo-spring-boot](dashx-demo-spring-boot) project for a complete example of how to use this starter.
 
 ## Development
 
