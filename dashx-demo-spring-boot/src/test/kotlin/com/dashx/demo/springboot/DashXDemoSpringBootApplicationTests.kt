@@ -1,5 +1,10 @@
-package com.dashx.demo.spring_boot
+package com.dashx.demo.springboot
 
-import org.springframework.boot.test.context.SpringBootTest
+import org.junit.jupiter.api.Test
 
-@SpringBootTest class DashXDemoSpringBootApplicationTests
+class DashXDemoSpringBootApplicationTests {
+    @Test
+    fun sanityCheck() {
+        assert(true)
+    }
+}

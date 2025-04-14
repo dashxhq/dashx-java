@@ -11,18 +11,19 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.graphql)
-
-    `java-library`
-
     alias(libs.plugins.gradle.maven.publish)
 
-    signing
+    id("signing")
 }
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {

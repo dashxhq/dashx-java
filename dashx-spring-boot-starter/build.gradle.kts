@@ -1,13 +1,11 @@
 import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-    `java-library`
-
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.plugin.spring)
     alias(libs.plugins.gradle.maven.publish)
 
-    signing
+    id("signing")
 }
 
 val group = libs.versions.group.get()
@@ -18,6 +16,10 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
