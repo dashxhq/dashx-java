@@ -211,9 +211,9 @@ private constructor(
         if (accUid == null) {
             if (accAnonUid == null) {
                 accAnonUid = generateAccountAnonymousUid()
-            } else {
-                accAnonUid = null
             }
+        } else {
+            accAnonUid = null
         }
 
         val query =
