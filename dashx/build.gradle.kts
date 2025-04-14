@@ -3,12 +3,15 @@ import com.expediagroup.graphql.plugin.gradle.config.GraphQLSerializer
 import com.expediagroup.graphql.plugin.gradle.graphql
 import com.vanniktech.maven.publish.SonatypeHost
 
+val group = libs.versions.group.get()
+val artifactId = "dashx-java"
+val version = libs.versions.dashx.get()
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.graphql)
 
-    // Apply the java-library plugin for API and implementation separation.
     `java-library`
 
     alias(libs.plugins.gradle.maven.publish)
@@ -16,8 +19,10 @@ plugins {
     signing
 }
 
-repositories {
-    mavenCentral()
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 dependencies {
@@ -35,13 +40,6 @@ dependencies {
     implementation(libs.kotlin.logging)
     implementation(libs.logback.classic)
     implementation(libs.json)
-}
-
-// Apply a specific Java toolchain to ease working on different environments.
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
 }
 
 tasks.named<Test>("test") {
@@ -68,7 +66,7 @@ signing {
 }
 
 mavenPublishing {
-    coordinates("com.dashx", "dashx-java", "1.0.0")
+    coordinates(group, artifactId, version)
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
 

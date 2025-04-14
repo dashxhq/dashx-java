@@ -1,11 +1,18 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
-    id("java-library")
-    id("org.jetbrains.kotlin.jvm")
-    id("org.jetbrains.kotlin.plugin.spring")
+    `java-library`
+
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.spring)
+    alias(libs.plugins.gradle.maven.publish)
+
+    signing
 }
 
-group = "com.dashx"
-version = "0.0.1-SNAPSHOT"
+val group = libs.versions.group.get()
+val artifactId = "dashx-spring-boot-starter"
+val version = libs.versions.dashx.get()
 
 java {
     toolchain {
@@ -13,15 +20,49 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     api(project(":dashx"))
-    implementation("org.springframework.boot:spring-boot-autoconfigure:3.4.1")
+
+    implementation(libs.spring.boot.autoconfigure)
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+signing {
+    useGpgCmd()
+    sign(publishing.publications)
+}
+
+mavenPublishing {
+    coordinates(group, artifactId, version)
+
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
+
+    pom {
+        name.set("DashX Spring Boot Starter")
+        description.set("DashX Starter for Spring Boot Applications")
+        url.set("https://github.com/dashxhq/dashx-java")
+
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://github.com/dashxhq/dashx-java/blob/main/LICENSE")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("gulshan.dashx")
+                name.set("Gulshan Dhingra")
+            }
+        }
+
+        scm {
+            connection.set("scm:git:github.com/dashxhq/dashx-java.git")
+            developerConnection.set("scm:git:ssh://github.com/dashxhq/dashx-java.git")
+            url.set("https://github.com/dashxhq/dashx-java")
+        }
+    }
 }
