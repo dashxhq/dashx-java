@@ -12,14 +12,14 @@ class DashXAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     fun dashxClient(properties: DashXProperties): DashX =
-            DashX.getInstance().apply {
-                configure(
-                        com.dashx.DashXConfig(
-                                publicKey = properties.publicKey,
-                                privateKey = properties.privateKey,
-                                targetEnvironment = properties.targetEnvironment,
-                                baseUri = properties.baseUrl,
-                        ),
-                )
-            }
+        DashX.getInstance().apply {
+            configure(
+                com.dashx.DashXConfig(
+                    publicKey = properties.publicKey,
+                    privateKey = properties.privateKey,
+                    targetEnvironment = properties.targetEnvironment,
+                    baseUrl = properties.baseUrl,
+                ),
+            )
+        }
 }

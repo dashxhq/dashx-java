@@ -3,20 +3,15 @@ plugins {
     alias(libs.plugins.kotlin.plugin.spring)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.ktfmt)
 }
 
 val group = libs.versions.group.get()
 val version = libs.versions.dashx.get()
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
     implementation(project(":dashx-spring-boot-starter"))
@@ -31,6 +26,9 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+ktfmt {
+    blockIndent.set(4)
+    continuationIndent.set(4)
 }
+
+tasks.withType<Test> { useJUnitPlatform() }

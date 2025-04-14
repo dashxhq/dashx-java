@@ -12,19 +12,14 @@ plugins {
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.graphql)
     alias(libs.plugins.gradle.maven.publish)
+    alias(libs.plugins.ktfmt)
 
     id("signing")
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
@@ -55,7 +50,10 @@ graphql {
 
         customScalars =
             listOf(
-                GraphQLScalar("JSON", "kotlinx.serialization.json.JsonObject", "com.dashx.graphql.scalars.converters.JsonScalarConverter"),
+                GraphQLScalar(
+                    "JSON",
+                    "kotlinx.serialization.json.JsonObject",
+                    "com.dashx.graphql.scalars.converters.JsonScalarConverter"),
             )
         serializer = GraphQLSerializer.KOTLINX
     }
@@ -96,4 +94,9 @@ mavenPublishing {
             url.set("https://github.com/dashxhq/dashx-java")
         }
     }
+}
+
+ktfmt {
+    blockIndent.set(4)
+    continuationIndent.set(4)
 }

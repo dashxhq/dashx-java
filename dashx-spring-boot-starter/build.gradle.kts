@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.plugin.spring)
     alias(libs.plugins.gradle.maven.publish)
+    alias(libs.plugins.ktfmt)
 
     id("signing")
 }
@@ -12,15 +13,9 @@ val group = libs.versions.group.get()
 val artifactId = "dashx-spring-boot-starter"
 val version = libs.versions.dashx.get()
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
     api(project(":dashx"))
@@ -28,9 +23,7 @@ dependencies {
     implementation(libs.spring.boot.autoconfigure)
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+tasks.withType<Test> { useJUnitPlatform() }
 
 signing {
     useGpgCmd()
@@ -67,4 +60,9 @@ mavenPublishing {
             url.set("https://github.com/dashxhq/dashx-java")
         }
     }
+}
+
+ktfmt {
+    blockIndent.set(4)
+    continuationIndent.set(4)
 }

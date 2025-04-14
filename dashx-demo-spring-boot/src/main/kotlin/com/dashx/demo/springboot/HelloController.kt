@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class HelloController(
-        private val dashx: DashX,
+    private val dashx: DashX,
 ) {
     @GetMapping("/")
     fun index(): String {

@@ -28,7 +28,7 @@ private val logger = KotlinLogging.logger {}
 
 class DashX
 private constructor(
-        val instanceName: String,
+    val instanceName: String,
 ) {
     companion object {
         private val instances: MutableMap<String, DashX> = mutableMapOf()
@@ -37,11 +37,11 @@ private constructor(
 
         @JvmStatic
         fun getInstance(instanceName: String): DashX =
-                instances.getOrPut(instanceName) { DashX(instanceName) }
+            instances.getOrPut(instanceName) { DashX(instanceName) }
     }
 
     // Setup variables
-    private var baseURI: String? = null
+    private var baseUrl: String? = null
     private var publicKey: String? = null
     private var privateKey: String? = null
     private var targetEnvironment: String? = null
@@ -57,7 +57,7 @@ private constructor(
     }
 
     private fun init(config: DashXConfig) {
-        this.baseURI = config.baseUri
+        this.baseUrl = config.baseUrl
         this.publicKey = config.publicKey
         this.privateKey = config.privateKey
         this.targetEnvironment = config.targetEnvironment
@@ -73,32 +73,32 @@ private constructor(
 
     private fun getGraphqlClient(): DashXGraphQLKtorClient {
         val httpClient =
-                HttpClient(engineFactory = io.ktor.client.engine.okhttp.OkHttp) {
-                    engine {
-                        config {
-                            connectTimeout(10, TimeUnit.SECONDS)
-                            readTimeout(60, TimeUnit.SECONDS)
-                            writeTimeout(60, TimeUnit.SECONDS)
-                        }
-                    }
-                    install(Logging) {
-                        logger = Logger.DEFAULT
-                        level = LogLevel.ALL
-                    }
-
-                    defaultRequest {
-                        publicKey?.let { header("X-Public-Key", it) }
-
-                        privateKey?.let { header("X-Private-Key", it) }
-
-                        targetEnvironment?.let { header("X-Target-Environment", it) }
+            HttpClient(engineFactory = io.ktor.client.engine.okhttp.OkHttp) {
+                engine {
+                    config {
+                        connectTimeout(10, TimeUnit.SECONDS)
+                        readTimeout(60, TimeUnit.SECONDS)
+                        writeTimeout(60, TimeUnit.SECONDS)
                     }
                 }
+                install(Logging) {
+                    logger = Logger.DEFAULT
+                    level = LogLevel.ALL
+                }
+
+                defaultRequest {
+                    publicKey?.let { header("X-Public-Key", it) }
+
+                    privateKey?.let { header("X-Private-Key", it) }
+
+                    targetEnvironment?.let { header("X-Target-Environment", it) }
+                }
+            }
 
         return DashXGraphQLKtorClient(
-                url = URI(baseURI ?: "https://api.dashx.com/graphql").toURL(),
-                httpClient = httpClient,
-                serializer = GraphQLClientKotlinxSerializer(),
+            url = URI(baseUrl ?: "https://api.dashx.com/graphql").toURL(),
+            httpClient = httpClient,
+            serializer = GraphQLClientKotlinxSerializer(),
         )
     }
 
@@ -109,7 +109,8 @@ private constructor(
      *
      * @param options User identification options
      * @return A CompletableFuture that will be completed with the identification result or
-     * completed exceptionally
+     *   completed exceptionally
+     *
      * ```
      *         if there are GraphQL errors or execution errors
      * ```
@@ -123,39 +124,39 @@ private constructor(
             }
 
             future.completeExceptionally(
-                    RuntimeException(
-                            "'identify' cannot be called with null, please pass options of type 'object'.",
-                    ),
+                RuntimeException(
+                    "'identify' cannot be called with null, please pass options of type 'object'.",
+                ),
             )
             return future
         }
 
         val uid = options[UserAttributes.UID] ?: this.accountUid
         val anonymousUid =
-                options[UserAttributes.ANONYMOUS_UID]
-                        ?: if (this.accountAnonymousUid != null) {
-                            this.accountAnonymousUid
-                        } else if (uid == null) {
-                            generateAccountAnonymousUid()
-                        } else {
-                            null
-                        }
+            options[UserAttributes.ANONYMOUS_UID]
+                ?: if (this.accountAnonymousUid != null) {
+                    this.accountAnonymousUid
+                } else if (uid == null) {
+                    generateAccountAnonymousUid()
+                } else {
+                    null
+                }
 
         val query =
-                IdentifyAccount(
-                        variables =
-                                IdentifyAccount.Variables(
-                                        IdentifyAccountInput(
-                                                uid = uid,
-                                                anonymousUid = anonymousUid,
-                                                email = options[UserAttributes.EMAIL],
-                                                phone = options[UserAttributes.PHONE],
-                                                name = options[UserAttributes.NAME],
-                                                firstName = options[UserAttributes.FIRST_NAME],
-                                                lastName = options[UserAttributes.LAST_NAME],
-                                        ),
-                                ),
-                )
+            IdentifyAccount(
+                variables =
+                    IdentifyAccount.Variables(
+                        IdentifyAccountInput(
+                            uid = uid,
+                            anonymousUid = anonymousUid,
+                            email = options[UserAttributes.EMAIL],
+                            phone = options[UserAttributes.PHONE],
+                            name = options[UserAttributes.NAME],
+                            firstName = options[UserAttributes.FIRST_NAME],
+                            lastName = options[UserAttributes.LAST_NAME],
+                        ),
+                    ),
+            )
 
         coroutineScope.launch {
             try {
@@ -164,7 +165,7 @@ private constructor(
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}"),
+                        RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.identifyAccount)
@@ -185,19 +186,20 @@ private constructor(
      * @param uid Optional user ID
      * @param data Optional event data
      * @return A CompletableFuture that will be completed with the tracking result or completed
-     * exceptionally
+     *   exceptionally
+     *
      * ```
      *         if there are GraphQL errors or execution errors
      * ```
      */
     fun track(
-            event: String,
-            uid: String? = null,
-            data: HashMap<String, String>? = hashMapOf(),
+        event: String,
+        uid: String? = null,
+        data: HashMap<String, String>? = hashMapOf(),
     ): CompletableFuture<TrackEventResponse?> {
         val future = CompletableFuture<TrackEventResponse?>()
         val jsonData =
-                data?.toMap()?.let { Json.parseToJsonElement(JSONObject(it).toString()).jsonObject }
+            data?.toMap()?.let { Json.parseToJsonElement(JSONObject(it).toString()).jsonObject }
 
         // Use the passed uid or else use the identified uid,
         // and if that's null too, use the anonymuos uid if present,
@@ -215,17 +217,17 @@ private constructor(
         }
 
         val query =
-                TrackEvent(
-                        variables =
-                                TrackEvent.Variables(
-                                        TrackEventInput(
-                                                accountAnonymousUid = accAnonUid,
-                                                accountUid = accUid,
-                                                data = jsonData,
-                                                event = event,
-                                        ),
-                                ),
-                )
+            TrackEvent(
+                variables =
+                    TrackEvent.Variables(
+                        TrackEventInput(
+                            accountAnonymousUid = accAnonUid,
+                            accountUid = accUid,
+                            data = jsonData,
+                            event = event,
+                        ),
+                    ),
+            )
 
         coroutineScope.launch {
             try {
@@ -234,7 +236,7 @@ private constructor(
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}"),
+                        RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.trackEvent)
@@ -253,7 +255,8 @@ private constructor(
      *
      * @param id The asset ID
      * @return A CompletableFuture that will be completed with the asset result or completed
-     * exceptionally
+     *   exceptionally
+     *
      * ```
      *         if there are GraphQL errors or execution errors
      * ```
@@ -269,7 +272,7 @@ private constructor(
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}"),
+                        RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.asset?.toAsset())
@@ -291,28 +294,29 @@ private constructor(
      * @param limit Optional maximum number of results
      * @param page Optional page number for pagination
      * @return A CompletableFuture that will be completed with the list of assets or completed
-     * exceptionally
+     *   exceptionally
+     *
      * ```
      *         if there are GraphQL errors or execution errors
      * ```
      */
     fun listAssets(
-            filter: JsonObject? = null,
-            order: JsonObject? = null,
-            limit: Int? = null,
-            page: Int? = null,
+        filter: JsonObject? = null,
+        order: JsonObject? = null,
+        limit: Int? = null,
+        page: Int? = null,
     ): CompletableFuture<List<Asset>?> {
         val future = CompletableFuture<List<Asset>?>()
         val query =
-                ListAssets(
-                        variables =
-                                ListAssets.Variables(
-                                        filter = filter,
-                                        order = order,
-                                        limit = limit,
-                                        page = page,
-                                ),
-                )
+            ListAssets(
+                variables =
+                    ListAssets.Variables(
+                        filter = filter,
+                        order = order,
+                        limit = limit,
+                        page = page,
+                    ),
+            )
 
         coroutineScope.launch {
             try {
@@ -321,7 +325,7 @@ private constructor(
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}"),
+                        RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.assetsList?.map { it.toAsset() })
@@ -341,7 +345,8 @@ private constructor(
      * @param resource The resource identifier to search (e.g., "users", "products")
      * @param options Optional search parameters like filters, sorting, pagination
      * @return A CompletableFuture that will be completed with the search results or completed
-     * exceptionally
+     *   exceptionally
+     *
      * ```
      *         if there are GraphQL errors or execution errors
      *
@@ -350,16 +355,15 @@ private constructor(
      * ```
      * // Kotlin usage dashX.searchRecords("users", options)
      * ```
-     *     .thenAccept { result ->
-     *         // Handle successful result
-     *     }
-     *     .exceptionally { error ->
-     *         // Handle error
-     *         null
-     *     }
+     *
+     * .thenAccept { result -> // Handle successful result } .exceptionally { error -> // Handle
+     * error null }
+     *
      * ```
      * ```
+     *
      * @example
+     *
      * ```java
      * // Java usage
      * dashX.searchRecords("users", options)
@@ -373,8 +377,8 @@ private constructor(
      * ```
      */
     fun searchRecords(
-            resource: String,
-            options: SearchRecordsOptions? = null,
+        resource: String,
+        options: SearchRecordsOptions? = null,
     ): CompletableFuture<List<JsonObject>> {
         val future = CompletableFuture<List<JsonObject>>()
         val input = options?.toInput(resource) ?: SearchRecordsInput(resource = resource)
@@ -387,7 +391,7 @@ private constructor(
                     logger.debug { result.errors.toString() }
 
                     future.completeExceptionally(
-                            RuntimeException("GraphQL errors: ${result.errors}"),
+                        RuntimeException("GraphQL errors: ${result.errors}"),
                     )
                 } else {
                     future.complete(result.data?.searchRecords ?: emptyList())

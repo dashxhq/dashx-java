@@ -7,7 +7,7 @@ import kotlinx.serialization.json.jsonObject
 
 class JsonScalarConverter : ScalarConverter<JsonObject> {
     override fun toScalar(rawValue: Any): JsonObject =
-            Json.parseToJsonElement(rawValue.toString()).jsonObject
+        Json.parseToJsonElement(rawValue.toString()).jsonObject
 
     override fun toJson(value: JsonObject): Any = value
 }
