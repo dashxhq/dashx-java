@@ -31,7 +31,7 @@ public data class SearchRecordsOptions(
         null,
     public val language: String? = null,
     public val limit: Int? = null,
-    @Serializable(with = JsonObjectSerializer::class) public val order: JsonObject? = null,
+    public val order: List<@Serializable(with = JsonObjectSerializer::class) JsonObject>? = null,
     public val page: Int? = null,
     public val preview: Boolean? = null,
 )

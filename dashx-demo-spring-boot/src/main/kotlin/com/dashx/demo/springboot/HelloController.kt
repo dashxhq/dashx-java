@@ -32,6 +32,7 @@ class HelloController(private val dashX: DashX) {
                             }
                         },
                     limit = limit,
+                    order = listOf(buildJsonObject { put("createdAt", "desc") }),
                 )
                 .await()
 

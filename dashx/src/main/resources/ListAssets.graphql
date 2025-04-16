@@ -1,4 +1,4 @@
-query ListAssets($filter: JSON, $order: JSON, $limit: Int, $page: Int) {
+query ListAssets($filter: JSON, $order: [JSON!], $limit: Int, $page: Int) {
     assetsList(filter: $filter, order: $order, limit: $limit, page: $page) {
         id
         resourceId

@@ -302,7 +302,7 @@ private constructor(
      */
     fun listAssets(
         filter: JsonObject? = null,
-        order: JsonObject? = null,
+        order: List<JsonObject>? = null,
         limit: Int? = null,
         page: Int? = null,
     ): CompletableFuture<List<Asset>?> {
