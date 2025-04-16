@@ -13,7 +13,7 @@ val group = libs.versions.group.get()
 val artifactId = "dashx-spring-boot-starter"
 val version = libs.versions.dashx.get()
 
-java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 
 repositories { mavenCentral() }
 
