@@ -17,6 +17,23 @@ class HelloController(private val dashX: DashX) {
         return "Hello, World!"
     }
 
+    @GetMapping("/asset")
+    suspend fun getAsset(
+        @RequestParam(required = true) assetId: String,
+    ): String {
+        val result =
+            dashX
+                .getAsset(assetId)
+                .await()
+
+        return """
+            <div>
+                ${result?.url}
+            </div>
+        """
+            .trimIndent()
+    }
+
     @GetMapping("/assets")
     suspend fun listAssets(
         @RequestParam(required = false) resourceId: String?,
