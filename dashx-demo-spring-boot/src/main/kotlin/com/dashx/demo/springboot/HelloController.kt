@@ -21,10 +21,7 @@ class HelloController(private val dashX: DashX) {
     suspend fun getAsset(
         @RequestParam(required = true) assetId: String,
     ): String {
-        val result =
-            dashX
-                .getAsset(assetId)
-                .await()
+        val result = dashX.getAsset(assetId).await()
 
         return """
             <div>
