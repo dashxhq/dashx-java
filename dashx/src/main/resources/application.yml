@@ -1,5 +1,0 @@
-dgs:
-  graphql:
-    extensions:
-      scalars:
-        enabled: true

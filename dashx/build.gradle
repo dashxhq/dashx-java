@@ -19,7 +19,6 @@ dependencies {
     testImplementation libs.junit.jupiter
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    implementation 'com.netflix.graphql.dgs:graphql-dgs-extended-scalars:10.1.2'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
     implementation 'com.netflix.graphql.dgs:graphql-dgs-client:10.1.2'
     implementation 'com.netflix.graphql.dgs:graphql-dgs:10.1.2'

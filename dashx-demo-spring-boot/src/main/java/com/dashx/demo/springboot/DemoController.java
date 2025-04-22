@@ -64,7 +64,7 @@ public class DemoController {
     }
 
     @GetMapping("/list-assets")
-    public CompletableFuture<Map<String, Object>> listAssets(@RequestParam String resourceId) {
+    public CompletableFuture<List<Asset>> listAssets(@RequestParam String resourceId) {
         return dashX.listAssets(new HashMap<String, Object>() {
             {
                 put("resourceId", new HashMap<String, Object>() {
@@ -73,18 +73,6 @@ public class DemoController {
                     }
                 });
             }
-        }).thenApply(response -> {
-            List<Asset> assets = response;
-            Map<String, Object> result = new HashMap<>();
-
-            for (Asset asset : assets) {
-                if (asset.getUrl() != null) {
-                    result.put("id", asset.getId());
-                    result.put("url", asset.getUrl());
-                }
-            }
-
-            return result;
         });
     }
 
@@ -105,14 +93,6 @@ public class DemoController {
                     }).build();
         }
 
-        return dashX.searchRecords(resource, options).thenApply(response -> {
-            ArrayList<Map<String, Object>> result = new ArrayList<>();
-
-            for (Map<String, Object> record : response) {
-                result.add(record);
-            }
-
-            return result;
-        });
+        return dashX.searchRecords(resource, options);
     }
 }
