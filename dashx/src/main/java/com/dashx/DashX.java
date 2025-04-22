@@ -108,7 +108,7 @@ public class DashX {
      *
      * @param options User identification options
      * @return A CompletableFuture that will be completed with the identification result or
-     *         completed exceptionally if there are GraphQL errors or execution errors
+     *         completed exceptionally if there are GraphQL errors or execution errors.
      */
     public CompletableFuture<Account> identify(Map<String, Object> options) {
         CompletableFuture<Account> future = new CompletableFuture<>();
@@ -162,7 +162,7 @@ public class DashX {
      * @param uid Optional user ID
      * @param data Optional event data
      * @return A CompletableFuture that will be completed with the tracking result or completed
-     *         exceptionally if there are GraphQL errors or execution errors
+     *         exceptionally if there are GraphQL errors or execution errors.
      */
     public CompletableFuture<TrackEventResponse> track(String event, String uid,
             Map<String, Object> data) {
@@ -217,7 +217,7 @@ public class DashX {
     // * @param limit Optional maximum number of results
     // * @param page Optional page number for pagination
     // * @return A CompletableFuture that will be completed with the list of assets or completed
-    // * exceptionally if there are GraphQL errors or execution errors
+    // * exceptionally if there are GraphQL errors or execution errors.
     // */
     public CompletableFuture<List<Asset>> listAssets(Map<String, Object> filter,
             List<Map<String, Object>> order, Integer limit, Integer page) {
@@ -253,7 +253,7 @@ public class DashX {
     // *
     // * @param id The id of the asset to get
     // * @return A CompletableFuture that will be completed with the asset or completed
-    // * exceptionally if there are GraphQL errors or execution errors
+    // * exceptionally if there are GraphQL errors or execution errors.
     // */
     public CompletableFuture<Asset> getAsset(String id) {
         CompletableFuture<Asset> future = new CompletableFuture<>();
@@ -275,19 +275,7 @@ public class DashX {
      * @param resource The resource identifier to search (e.g., "users", "products")
      * @param options Optional search parameters like filters, sorting, pagination
      * @return A CompletableFuture that will be completed with the search results or completed
-     *         exceptionally if there are GraphQL errors or execution errors
-     *
-     *         <p>
-     *         Example (Java usage):
-     *
-     *         <pre>
-     *         dashX.searchRecords("users", options).thenAccept(result -> {
-     *             // Handle successful result
-     *         }).exceptionally(error -> {
-     *             // Handle error
-     *             return null;
-     *         });
-     *         </pre>
+     *         exceptionally if there are GraphQL errors or execution errors.
      */
     public CompletableFuture<List<Map<String, Object>>> searchRecords(String resource,
             SearchRecordsOptions options) {

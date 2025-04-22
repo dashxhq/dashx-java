@@ -15,7 +15,7 @@ A Spring Boot starter for the DashX Java SDK that provides auto-configuration an
 
 ## Installation
 
-Add the following dependency to your `build.gradle.kts`:
+Add the following dependency to your `build.gradle`:
 
 ```
 dependencies {

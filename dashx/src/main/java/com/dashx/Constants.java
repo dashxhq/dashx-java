@@ -1,7 +1,6 @@
 package com.dashx;
 
 public final class Constants {
-    // Package and instance constants
     public static final String PACKAGE_NAME = "com.dashx";
     public static final String DEFAULT_INSTANCE = "default";
     public static final String DATA = "data";

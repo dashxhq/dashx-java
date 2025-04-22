@@ -4,7 +4,7 @@ plugins {
     id 'java-library'
     id 'signing'
 
-    alias(libs.plugins.gradle.maven.publish)
+    id 'com.vanniktech.maven.publish' version '0.31.0'
 }
 
 def version = libs.versions.dashx.get()
