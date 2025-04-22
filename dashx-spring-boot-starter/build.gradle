@@ -2,9 +2,8 @@ import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
     id 'java-library'
-    id 'signing'
-
     id 'com.vanniktech.maven.publish' version '0.31.0'
+    id 'signing'
 }
 
 def version = libs.versions.dashx.get()
@@ -32,39 +31,39 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-signing {
-    useGpgCmd()
-    sign(publishing.publications)
-}
-
 mavenPublishing {
     coordinates(group, artifactId, version)
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL,true)
 
     pom {
-        name = "DashX Spring Boot Starter"
-        description = "DashX Starter for Spring Boot Applications"
-        url = "https://github.com/dashxhq/dashx-java"
+        name = 'DashX Spring Boot Starter'
+        description = 'DashX Starter for Spring Boot Applications'
+        url = 'https://github.com/dashxhq/dashx-java'
 
         licenses {
             license {
-                name = "MIT License"
-                url = "https://github.com/dashxhq/dashx-java/blob/main/LICENSE"
+                name = 'MIT License'
+                url = 'https://github.com/dashxhq/dashx-java/blob/main/LICENSE'
             }
         }
 
         developers {
             developer {
-                id = "gulshan.dashx"
-                name = "Gulshan Dhingra"
+                id = 'gulshan.dashx'
+                name = 'Gulshan Dhingra'
             }
         }
 
         scm {
-            connection = "scm:git:github.com/dashxhq/dashx-java.git"
-            developerConnection = "scm:git:ssh://github.com/dashxhq/dashx-java.git"
-            url = "https://github.com/dashxhq/dashx-java"
+            connection = 'scm:git:github.com/dashxhq/dashx-java.git'
+            developerConnection = 'scm:git:ssh://github.com/dashxhq/dashx-java.git'
+            url = 'https://github.com/dashxhq/dashx-java'
         }
     }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications
 }

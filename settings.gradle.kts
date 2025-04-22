@@ -6,6 +6,6 @@ plugins {
 rootProject.name = "dashx-root"
 include(
     "dashx",
-    "dashx-demo-spring-boot",
-    "dashx-spring-boot-starter"
+    "dashx-spring-boot-starter",
+    "dashx-demo-spring-boot"
 )
