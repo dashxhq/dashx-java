@@ -2,8 +2,9 @@ import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
     id 'java-library'
-    id 'com.vanniktech.maven.publish' version '0.31.0'
     id 'signing'
+
+    alias(libs.plugins.gradle.maven.publish)
 }
 
 def version = libs.versions.dashx.get()
@@ -23,7 +24,8 @@ repositories {
 dependencies {
     api project(':dashx')
 
-    implementation libs.spring.boot.autoconfigure
+    implementation 'org.springframework.boot:spring-boot-autoconfigure:3.2.3'
+    implementation 'org.springframework.boot:spring-boot-starter:3.2.3'
 }
 
 tasks.named('test') {

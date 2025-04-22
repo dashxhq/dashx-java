@@ -12,7 +12,7 @@ public class Projections {
     }
 
     public static AssetProjectionRoot<?, ?> fullAssetProjection() {
-        return new AssetProjectionRoot<>().workspaceId().resourceId().attributeId()
+        return new AssetProjectionRoot<>().id().workspaceId().resourceId().attributeId()
                 .storageProviderId().uploaderId().data().uploadStatus().processingStatus()
                 .createdAt().updatedAt().name().size().mimeType().uploadStatusReason()
                 .processingStatusReason().url().staticVideoUrls().staticAudioUrl();

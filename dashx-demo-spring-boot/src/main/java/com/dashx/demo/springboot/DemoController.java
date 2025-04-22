@@ -2,11 +2,13 @@ package com.dashx.demo.springboot;
 
 import com.dashx.DashX;
 import com.dashx.graphql.generated.types.Asset;
-import org.springframework.web.bind.annotation.*;
+import com.dashx.graphql.utils.SearchRecordsOptions;
+import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class DemoController {
@@ -21,12 +23,30 @@ public class DemoController {
         return "Welcome to the DashX Demo!";
     }
 
+    @GetMapping("/identify")
+    public CompletableFuture<Map<String, Object>> identify(
+            @RequestParam Map<String, Object> options) {
+
+        return dashX.identify(options).thenApply(response -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("id", response.getId());
+            result.put("firstName", response.getFirstName());
+            result.put("lastName", response.getLastName());
+            result.put("email", response.getEmail());
+            result.put("phone", response.getPhone());
+            result.put("name", response.getName());
+            result.put("anonymousUid", response.getAnonymousUid());
+            result.put("uid", response.getUid());
+            return result;
+        });
+    }
+
     @GetMapping("/track")
-    public CompletableFuture<Map<String, String>> trackEvent(@RequestParam String event,
+    public CompletableFuture<Map<String, Object>> trackEvent(@RequestParam String event,
             @RequestParam(required = false) String uid) {
 
         return dashX.track(event, uid).thenApply(response -> {
-            Map<String, String> result = new HashMap<>();
+            Map<String, Object> result = new HashMap<>();
             result.put("status", response.getSuccess() ? "success" : "error");
             result.put("event", event);
             return result;
@@ -34,9 +54,9 @@ public class DemoController {
     }
 
     @GetMapping("/get-asset")
-    public CompletableFuture<Map<String, String>> getAsset(@RequestParam String id) {
+    public CompletableFuture<Map<String, Object>> getAsset(@RequestParam String id) {
         return dashX.getAsset(id).thenApply(response -> {
-            Map<String, String> result = new HashMap<>();
+            Map<String, Object> result = new HashMap<>();
             result.put("id", response.getId());
             result.put("url", response.getUrl());
             return result;
@@ -44,7 +64,7 @@ public class DemoController {
     }
 
     @GetMapping("/list-assets")
-    public CompletableFuture<Map<String, String>> listAssets(@RequestParam String resourceId) {
+    public CompletableFuture<Map<String, Object>> listAssets(@RequestParam String resourceId) {
         return dashX.listAssets(new HashMap<String, Object>() {
             {
                 put("resourceId", new HashMap<String, Object>() {
@@ -55,13 +75,41 @@ public class DemoController {
             }
         }).thenApply(response -> {
             List<Asset> assets = response;
-            Map<String, String> result = new HashMap<>();
+            Map<String, Object> result = new HashMap<>();
 
             for (Asset asset : assets) {
                 if (asset.getUrl() != null) {
                     result.put("id", asset.getId());
                     result.put("url", asset.getUrl());
                 }
+            }
+
+            return result;
+        });
+    }
+
+    @GetMapping("/search-records")
+    public CompletableFuture<List<Map<String, Object>>> searchRecords(@RequestParam String resource,
+            @RequestParam(required = false) SearchRecordsOptions options) {
+
+        if (options == null) {
+            options =
+                    new SearchRecordsOptions.Builder().order(new ArrayList<Map<String, Object>>() {
+                        {
+                            add(new HashMap<String, Object>() {
+                                {
+                                    put("createdAt", "desc");
+                                }
+                            });
+                        }
+                    }).build();
+        }
+
+        return dashX.searchRecords(resource, options).thenApply(response -> {
+            ArrayList<Map<String, Object>> result = new ArrayList<>();
+
+            for (Map<String, Object> record : response) {
+                result.add(record);
             }
 
             return result;

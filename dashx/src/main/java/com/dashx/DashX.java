@@ -5,8 +5,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.LinkedMultiValueMap;
@@ -112,7 +110,7 @@ public class DashX {
      * @return A CompletableFuture that will be completed with the identification result or
      *         completed exceptionally if there are GraphQL errors or execution errors
      */
-    public CompletableFuture<Account> identify(Map<String, String> options) {
+    public CompletableFuture<Account> identify(Map<String, Object> options) {
         CompletableFuture<Account> future = new CompletableFuture<>();
 
         if (options == null) {
@@ -123,13 +121,13 @@ public class DashX {
         }
 
         String uid = options.containsKey(Constants.UserAttributes.UID)
-                ? options.get(Constants.UserAttributes.UID)
+                ? (String) options.get(Constants.UserAttributes.UID)
                 : this.accountUid;
 
         String anonymousUid;
 
         if (options.containsKey(Constants.UserAttributes.ANONYMOUS_UID)) {
-            anonymousUid = options.get(Constants.UserAttributes.ANONYMOUS_UID);
+            anonymousUid = (String) options.get(Constants.UserAttributes.ANONYMOUS_UID);
         } else if (this.accountAnonymousUid != null) {
             anonymousUid = this.accountAnonymousUid;
         } else if (uid == null) {
@@ -140,12 +138,13 @@ public class DashX {
 
         AccountService accountService = new AccountService(this.graphqlClient);
 
-        IdentifyAccountInput input = IdentifyAccountInput.newBuilder().uid(uid)
-                .anonymousUid(anonymousUid).email(options.get(Constants.UserAttributes.EMAIL))
-                .phone(options.get(Constants.UserAttributes.PHONE))
-                .name(options.get(Constants.UserAttributes.NAME))
-                .firstName(options.get(Constants.UserAttributes.FIRST_NAME))
-                .lastName(options.get(Constants.UserAttributes.LAST_NAME)).build();
+        IdentifyAccountInput input =
+                IdentifyAccountInput.newBuilder().uid(uid).anonymousUid(anonymousUid)
+                        .email((String) options.get(Constants.UserAttributes.EMAIL))
+                        .phone((String) options.get(Constants.UserAttributes.PHONE))
+                        .name((String) options.get(Constants.UserAttributes.NAME))
+                        .firstName((String) options.get(Constants.UserAttributes.FIRST_NAME))
+                        .lastName((String) options.get(Constants.UserAttributes.LAST_NAME)).build();
 
         future = accountService.identifyAccount(input).toFuture().exceptionally(error -> {
             logger.error("Error identifying account:", error);
@@ -306,8 +305,6 @@ public class DashX {
             logger.error("Error searching records:", error);
 
             return null;
-        }).thenApply(result -> {
-            return result.stream().map(JSONObject::toMap).collect(Collectors.toList());
         });
 
         return future;

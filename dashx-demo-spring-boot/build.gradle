@@ -7,22 +7,24 @@ plugins {
 def version = libs.versions.dashx.get()
 def group = libs.versions.group.get()
 
-java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 
-repositories { mavenCentral() }
+repositories {
+    mavenCentral()
+}
 
 dependencies {
-    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
-
-    implementation project(":dashx-spring-boot-starter")
-
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation project(":dashx-spring-boot-starter")
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
 tasks.named('test') {
