@@ -1,12 +1,12 @@
 package com.dashx.graphql;
 
 import com.netflix.graphql.dgs.client.codegen.GraphQLQueryRequest;
+import java.util.List;
+import java.util.Map;
 import reactor.core.publisher.Mono;
 
 import com.dashx.graphql.generated.client.SearchRecordsGraphQLQuery;
 import com.dashx.graphql.generated.types.SearchRecordsInput;
-import java.util.List;
-import java.util.Map;
 import com.dashx.DashXGraphQLClient;
 
 public class RecordService {

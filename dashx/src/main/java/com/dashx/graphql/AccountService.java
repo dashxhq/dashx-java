@@ -7,7 +7,6 @@ import com.dashx.graphql.generated.client.IdentifyAccountGraphQLQuery;
 import com.dashx.graphql.generated.client.IdentifyAccountProjectionRoot;
 import com.dashx.graphql.generated.types.Account;
 import com.dashx.graphql.generated.types.IdentifyAccountInput;
-
 import com.dashx.DashXGraphQLClient;
 import com.dashx.graphql.utils.Projections;
 

@@ -7,7 +7,6 @@ import com.dashx.graphql.generated.client.TrackEventGraphQLQuery;
 import com.dashx.graphql.generated.client.TrackEventProjectionRoot;
 import com.dashx.graphql.generated.types.TrackEventResponse;
 import com.dashx.graphql.generated.types.TrackEventInput;
-
 import com.dashx.DashXGraphQLClient;
 import com.dashx.graphql.utils.Projections;
 

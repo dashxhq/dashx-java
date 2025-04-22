@@ -9,7 +9,6 @@ import com.dashx.graphql.generated.client.AssetGraphQLQuery;
 import com.dashx.graphql.generated.client.AssetProjectionRoot;
 import com.dashx.graphql.generated.client.AssetsListGraphQLQuery;
 import com.dashx.graphql.generated.types.Asset;
-
 import com.dashx.DashXGraphQLClient;
 import com.dashx.graphql.utils.Projections;
 
