@@ -1,0 +1,105 @@
+scalar UUID
+scalar Timestamp
+scalar JSON
+
+type Query {
+  asset(id: UUID!): Asset
+  assetsList(filter: JSON, order: [JSON!], limit: Int, page: Int): [Asset]
+  searchRecords(input: SearchRecordsInput!): [JSON!]
+}
+
+type Mutation {
+  identifyAccount(input: IdentifyAccountInput!): Account
+  trackEvent(input: TrackEventInput!): TrackEventResponse
+}
+
+type Account {
+  id: UUID!
+  environmentId: UUID!
+  email: String
+  phone: String
+  fullName: String
+  name: String
+  firstName: String
+  lastName: String
+  avatar: String
+  timeZone: String
+  uid: String
+  anonymousUid: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Asset {
+  id: UUID!
+  workspaceId: UUID!
+  resourceId: UUID
+  attributeId: UUID
+  storageProviderId: UUID
+  uploaderId: UUID
+  data: JSON!
+  uploadStatus: String!
+  processingStatus: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  name: String
+  size: Int
+  mimeType: String
+  uploadStatusReason: String
+  processingStatusReason: String
+  url: String
+  staticVideoUrls: JSON
+  staticAudioUrl: String
+}
+
+type TrackEventResponse {
+  success: Boolean!
+}
+
+input IdentifyAccountInput {
+  uid: String
+  anonymousUid: String
+  email: String
+  phone: String
+  name: String
+  firstName: String
+  lastName: String
+  systemContext: JSON
+  targetEnvironment: String
+}
+
+input SearchRecordsInput {
+  resource: String!
+  filter: JSON
+  order: [JSON!]
+  limit: Int
+  page: Int
+  preview: Boolean
+  language: String
+  fields: [JSON!]
+  include: [JSON!]
+  exclude: [JSON!]
+}
+
+input TrackEventInput {
+  event: String!
+  accountUid: String
+  accountAnonymousUid: String
+  data: JSON
+  timestamp: Timestamp
+  systemContext: JSON
+}
+
+enum AssetProcessingStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum AssetUploadStatus {
+  PENDING
+  UPLOADED
+  FAILED
+  CANCELED
+  TIMED_OUT
+}

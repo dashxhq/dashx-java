@@ -15,11 +15,11 @@ A Spring Boot starter for the DashX Java SDK that provides auto-configuration an
 
 ## Installation
 
-Add the following dependency to your `build.gradle.kts`:
+Add the following dependency to your `build.gradle`:
 
-```kotlin
+```
 dependencies {
-    implementation("com.dashx:dashx-spring-boot-starter:${version}")
+    implementation 'com.dashx:dashx-spring-boot-starter:${version}'
 }
 ```
 
@@ -55,53 +55,31 @@ dashx.base-url=https://...
 
 The DashX client will be automatically configured and available for injection in your Spring components:
 
-```kotlin
+```
 import com.dashx.DashX
 ...
 
 @RestController
-class MyController(private val dashX: DashX) {
+public class DemoController {
+    private final DashX dashX;
 
-    @GetMapping("/login")
-    fun login(...) {
-        ...
-        dashX.identify(userId)
-        ...
+    public DemoController(DashX dashX) {
+        this.dashX = dashX;
     }
 
-    @GetMapping("/add-to-cart")
-    fun addToCart(...) {
+    @GetMapping("/home")
+    public CompletableFuture<Map<String, Object>> home(
+            @RequestParam Map<String, Object> options) {
         ...
-        dashX.track("Item Added to Cart")
+        dashX.identify(options).thenApply(response -> {
+            Map<String, Object> result = new HashMap<>();
+
+            result.put("id", response.getId());
+            result.put("firstName", response.getFirstName());
+            result.put("lastName", response.getLastName());
+            ...
+        })
         ...
-    }
-
-    @GetMapping("/products")
-    suspend fun products(
-        @RequestParam(required = false) productId: String?,
-        @RequestParam(required = false, defaultValue = "20") limit: Int
-    ): String {
-        val result =
-            dashX
-                .listAssets(
-                    filter =
-                        buildJsonObject {
-                            if (productId != null) {
-                                put("resourceId", buildJsonObject { put("eq", productId) })
-                            }
-                        },
-                    limit = limit,
-                )
-                .await()
-
-        return """
-            <div>
-                ${result?.filter { it.url != null }?.joinToString("<br />") { asset ->
-                    """<a href="${asset.url}">${asset.name}</a>"""
-                } ?: "No assets found"}
-            </div>
-        """
-            .trimIndent()
     }
 }
 ```

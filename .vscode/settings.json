@@ -1,6 +1,10 @@
 {
+    "editor.detectIndentation": false,
+    "editor.tabSize": 4,
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "interactive",
-    "editor.detectIndentation": false,
-    "editor.tabSize": 4
+    "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+    "[java]": {
+        "editor.formatOnSave": true
+    },
 }
