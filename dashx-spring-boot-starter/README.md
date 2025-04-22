@@ -10,7 +10,7 @@ A Spring Boot starter for the DashX Java SDK that provides auto-configuration an
 
 ## Requirements
 
-- Java 21 or higher
+- Java 17 or higher
 - Spring Boot 3.4.1 or higher
 
 ## Installation
