@@ -1,0 +1,90 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
+plugins {
+    id 'java-library'
+    id 'com.netflix.dgs.codegen' version '8.0.2'
+    id 'com.vanniktech.maven.publish' version '0.31.0'
+    id 'signing'
+}
+
+def version = libs.versions.dashx.get()
+def group = libs.versions.group.get()
+def artifactId = "dashx-java"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation libs.junit.jupiter
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'com.netflix.graphql.dgs:graphql-dgs-extended-scalars:10.1.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.3'
+    implementation 'com.netflix.graphql.dgs:graphql-dgs-client:10.1.2'
+    implementation 'com.netflix.graphql.dgs:graphql-dgs:10.1.2'
+    implementation 'org.json:json:20250107'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation 'org.springframework:spring-webflux:6.2.6'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+generateJava {
+    schemaPaths = ["${projectDir}/src/main/resources"]
+    packageName = "com.dashx.graphql.generated"
+    generateClient = true
+
+    typeMapping = [
+        Timestamp: "String",
+        UUID: "String",
+        JSON: "java.util.Map<String, Object>"
+    ]
+}
+
+mavenPublishing {
+    coordinates(group, artifactId, version)
+
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
+
+    pom {
+        name = "DashX Java SDK"
+        description = "DashX SDK for Java"
+        url = "https://github.com/dashxhq/dashx-java"
+
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://github.com/dashxhq/dashx-java/blob/main/LICENSE"
+            }
+        }
+
+        developers {
+            developer {
+                id = "gulshan.dashx"
+                name = "Gulshan Dhingra"
+            }
+        }
+
+        scm {
+            connection = "scm:git:github.com/dashxhq/dashx-java.git"
+            developerConnection = "scm:git:ssh://github.com/dashxhq/dashx-java.git"
+            url = "https://github.com/dashxhq/dashx-java"
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications
+}
