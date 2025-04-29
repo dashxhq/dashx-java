@@ -62,6 +62,7 @@ public final class DashXConfig {
         public DashXConfig build() {
             Objects.requireNonNull(publicKey, "publicKey must not be null");
             Objects.requireNonNull(privateKey, "privateKey must not be null");
+            Objects.requireNonNull(targetEnvironment, "targetEnvironment must not be null");
             return new DashXConfig(this);
         }
     }
