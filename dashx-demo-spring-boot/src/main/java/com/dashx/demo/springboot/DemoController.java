@@ -4,7 +4,6 @@ import com.dashx.DashX;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.graphql.utils.SearchRecordsOptions;
 import java.util.concurrent.CompletableFuture;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,15 +64,8 @@ public class DemoController {
 
     @GetMapping("/list-assets")
     public CompletableFuture<List<Asset>> listAssets(@RequestParam String resourceId) {
-        return dashX.listAssets(new HashMap<String, Object>() {
-            {
-                put("resourceId", new HashMap<String, Object>() {
-                    {
-                        put("eq", resourceId);
-                    }
-                });
-            }
-        });
+        return dashX.listAssets(
+                Map.of("resourceId", Map.of("eq", resourceId), "id", Map.of("in", List.of(1234))));
     }
 
     @GetMapping("/search-records")
@@ -81,16 +73,8 @@ public class DemoController {
             @RequestParam(required = false) SearchRecordsOptions options) {
 
         if (options == null) {
-            options =
-                    new SearchRecordsOptions.Builder().order(new ArrayList<Map<String, Object>>() {
-                        {
-                            add(new HashMap<String, Object>() {
-                                {
-                                    put("createdAt", "desc");
-                                }
-                            });
-                        }
-                    }).build();
+            options = new SearchRecordsOptions.Builder().order(List.of(Map.of("createdAt", "desc")))
+                    .build();
         }
 
         return dashX.searchRecords(resource, options);
