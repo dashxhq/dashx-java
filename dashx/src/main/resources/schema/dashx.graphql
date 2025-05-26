@@ -3,103 +3,167 @@ scalar Timestamp
 scalar JSON
 
 type Query {
-  asset(id: UUID!): Asset
-  assetsList(filter: JSON, order: [JSON!], limit: Int, page: Int): [Asset]
-  searchRecords(input: SearchRecordsInput!): [JSON!]
+    asset(id: UUID!): Asset!
+    issue(id: UUID!): Issue!
+    assetsList(filter: JSON, order: [JSON!], limit: Int, page: Int): [Asset!]!
+    searchRecords(input: SearchRecordsInput!): [JSON!]!
 }
 
 type Mutation {
-  identifyAccount(input: IdentifyAccountInput!): Account
-  trackEvent(input: TrackEventInput!): TrackEventResponse
+    identifyAccount(input: IdentifyAccountInput!): Account!
+    trackEvent(input: TrackEventInput!): TrackEventResponse!
+    createIssue(input: CreateIssueInput!): Issue!
+    upsertIssue(input: UpsertIssueInput!): Issue!
 }
 
 type Account {
-  id: UUID!
-  environmentId: UUID!
-  email: String
-  phone: String
-  fullName: String
-  name: String
-  firstName: String
-  lastName: String
-  avatar: String
-  timeZone: String
-  uid: String
-  anonymousUid: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+    id: UUID!
+    environmentId: UUID!
+    email: String
+    phone: String
+    fullName: String
+    name: String
+    firstName: String
+    lastName: String
+    avatar: String
+    timeZone: String
+    uid: String
+    anonymousUid: String
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
 }
 
 type Asset {
-  id: UUID!
-  workspaceId: UUID!
-  resourceId: UUID
-  attributeId: UUID
-  storageProviderId: UUID
-  uploaderId: UUID
-  data: JSON!
-  uploadStatus: String!
-  processingStatus: String!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  name: String
-  size: Int
-  mimeType: String
-  uploadStatusReason: String
-  processingStatusReason: String
-  url: String
-  staticVideoUrls: JSON
-  staticAudioUrl: String
+    id: UUID!
+    workspaceId: UUID!
+    resourceId: UUID
+    attributeId: UUID
+    storageProviderId: UUID
+    uploaderId: UUID
+    data: JSON!
+    uploadStatus: String!
+    processingStatus: String!
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
+    name: String
+    size: Int
+    mimeType: String
+    uploadStatusReason: String
+    processingStatusReason: String
+    url: String
+    staticVideoUrls: JSON
+    staticAudioUrl: String
+}
+
+type Issue {
+    id: UUID!
+    workspaceId: UUID!
+    issueStatusId: UUID!
+    createdById: UUID!
+    environmentId: UUID!
+    spaceId: UUID
+    parentId: UUID
+    assigneeId: UUID
+    priority: IssuePriority
+    title: String!
+    description: String
+    position: Int
+    properties: JSON!
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
+    issueTypeId: UUID!
+    dueAt: Timestamp
+    number: Int!
+    idempotencyKey: String
 }
 
 type TrackEventResponse {
-  success: Boolean!
+    success: Boolean!
+}
+
+input CreateIssueInput {
+    issueType: String
+    issueStatus: String
+    space: String
+    parent: String
+    assigneeId: UUID
+    priority: IssuePriority
+    title: String!
+    description: String
+    position: Int
+    properties: JSON!
+    labels: [String!]
+    dueAt: Timestamp
+    idempotencyKey: String
+}
+
+input UpsertIssueInput {
+    idempotencyKey: String
+    issueType: String
+    issueStatus: String
+    space: String
+    parent: String
+    assigneeId: UUID
+    priority: IssuePriority
+    title: String!
+    description: String
+    position: Int
+    properties: JSON!
+    labels: [String!]
+    dueAt: Timestamp
 }
 
 input IdentifyAccountInput {
-  uid: String
-  anonymousUid: String
-  email: String
-  phone: String
-  name: String
-  firstName: String
-  lastName: String
-  systemContext: JSON
-  targetEnvironment: String
+    uid: String
+    anonymousUid: String
+    email: String
+    phone: String
+    name: String
+    firstName: String
+    lastName: String
+    systemContext: JSON
 }
 
 input SearchRecordsInput {
-  resource: String!
-  filter: JSON
-  order: [JSON!]
-  limit: Int
-  page: Int
-  preview: Boolean
-  language: String
-  fields: [JSON!]
-  include: [JSON!]
-  exclude: [JSON!]
+    resource: String!
+    filter: JSON
+    order: [JSON!]
+    limit: Int
+    page: Int
+    preview: Boolean
+    language: String
+    fields: [JSON!]
+    include: [JSON!]
+    exclude: [JSON!]
 }
 
 input TrackEventInput {
-  event: String!
-  accountUid: String
-  accountAnonymousUid: String
-  data: JSON
-  timestamp: Timestamp
-  systemContext: JSON
+    event: String!
+    accountUid: String
+    accountAnonymousUid: String
+    data: JSON
+    timestamp: Timestamp
+    systemContext: JSON
 }
 
 enum AssetProcessingStatus {
-  PENDING
-  COMPLETED
-  FAILED
+    PENDING
+    COMPLETED
+    FAILED
 }
 
 enum AssetUploadStatus {
-  PENDING
-  UPLOADED
-  FAILED
-  CANCELED
-  TIMED_OUT
+    PENDING
+    UPLOADED
+    FAILED
+    CANCELED
+    TIMED_OUT
+}
+
+enum IssuePriority {
+    NONE
+    LOW
+    MEDIUM
+    HIGH
+    URGENT
 }
