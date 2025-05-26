@@ -2,6 +2,8 @@ package com.dashx.demo.springboot;
 
 import com.dashx.DashX;
 import com.dashx.graphql.generated.types.Asset;
+import com.dashx.graphql.generated.types.CreateIssueInput;
+import com.dashx.graphql.generated.types.Issue;
 import com.dashx.graphql.utils.SearchRecordsOptions;
 import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
@@ -78,5 +80,20 @@ public class DemoController {
         }
 
         return dashX.searchRecords(resource, options);
+    }
+
+    @GetMapping("/create-issue")
+    public CompletableFuture<Issue> createIssue(@RequestParam String title,
+            @RequestParam(required = false) String issueType,
+            @RequestParam(required = false) String issueStatus) {
+        CreateIssueInput.Builder builder = CreateIssueInput.newBuilder();
+
+        builder.title(title);
+        builder.issueType(issueType);
+        builder.issueStatus(issueStatus);
+
+        CreateIssueInput input = builder.build();
+
+        return dashX.createIssue(input);
     }
 }

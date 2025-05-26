@@ -12,6 +12,9 @@ import org.springframework.util.MultiValueMap;
 
 import com.dashx.graphql.generated.types.Account;
 import com.dashx.graphql.generated.types.Asset;
+import com.dashx.graphql.generated.types.Issue;
+import com.dashx.graphql.generated.types.CreateIssueInput;
+import com.dashx.graphql.generated.types.UpsertIssueInput;
 import com.dashx.graphql.generated.types.IdentifyAccountInput;
 import com.dashx.graphql.generated.types.SearchRecordsInput;
 import com.dashx.graphql.generated.types.TrackEventInput;
@@ -21,6 +24,7 @@ import com.dashx.graphql.AccountService;
 import com.dashx.graphql.AssetService;
 import com.dashx.graphql.EventService;
 import com.dashx.graphql.RecordService;
+import com.dashx.graphql.IssueService;
 import com.dashx.graphql.utils.SearchRecordsOptions;
 
 public class DashX {
@@ -111,9 +115,9 @@ public class DashX {
      *         completed exceptionally if there are GraphQL errors or execution errors.
      */
     public CompletableFuture<Account> identify(Map<String, Object> options) {
-        CompletableFuture<Account> future = new CompletableFuture<>();
-
         if (options == null) {
+            CompletableFuture<Account> future = new CompletableFuture<>();
+
             future.completeExceptionally(new RuntimeException(
                     "'identify' cannot be called with null, please pass options of type 'object'."));
 
@@ -146,13 +150,11 @@ public class DashX {
                         .firstName((String) options.get(Constants.UserAttributes.FIRST_NAME))
                         .lastName((String) options.get(Constants.UserAttributes.LAST_NAME)).build();
 
-        future = accountService.identifyAccount(input).toFuture().exceptionally(error -> {
+        return accountService.identifyAccount(input).toFuture().exceptionally(error -> {
             logger.error("Error identifying account:", error);
 
             return null;
         });
-
-        return future;
     }
 
     /**
@@ -166,8 +168,6 @@ public class DashX {
      */
     public CompletableFuture<TrackEventResponse> track(String event, String uid,
             Map<String, Object> data) {
-        CompletableFuture<TrackEventResponse> future = new CompletableFuture<>();
-
         // Use the passed uid or else use the identified uid,
         // and if that's null too, use the anonymous uid if present,
         // and if that's null too, generate a random uuid.
@@ -188,13 +188,11 @@ public class DashX {
         TrackEventInput input = TrackEventInput.newBuilder().event(event).accountUid(accUid)
                 .accountAnonymousUid(accAnonUid).data(data).build();
 
-        future = eventService.trackEvent(input).toFuture().exceptionally(error -> {
+        return eventService.trackEvent(input).toFuture().exceptionally(error -> {
             logger.error("Error tracking event:", error);
 
             return null;
         });
-
-        return future;
     }
 
     public CompletableFuture<TrackEventResponse> track(String event, Map<String, Object> data) {
@@ -256,17 +254,13 @@ public class DashX {
     // * exceptionally if there are GraphQL errors or execution errors.
     // */
     public CompletableFuture<Asset> getAsset(String id) {
-        CompletableFuture<Asset> future = new CompletableFuture<>();
-
         AssetService assetService = new AssetService(this.graphqlClient);
 
-        future = assetService.getAsset(id).toFuture().exceptionally(error -> {
+        return assetService.getAsset(id).toFuture().exceptionally(error -> {
             logger.error("Error listing assets:", error);
 
             return null;
         });
-
-        return future;
     }
 
     /**
@@ -279,8 +273,6 @@ public class DashX {
      */
     public CompletableFuture<List<Map<String, Object>>> searchRecords(String resource,
             SearchRecordsOptions options) {
-        CompletableFuture<List<Map<String, Object>>> future = new CompletableFuture<>();
-
         RecordService recordService = new RecordService(this.graphqlClient);
 
         SearchRecordsInput input = SearchRecordsInput.newBuilder().resource(resource)
@@ -289,16 +281,47 @@ public class DashX {
                 .language(options.getLanguage()).fields(options.getFields())
                 .include(options.getInclude()).exclude(options.getExclude()).build();
 
-        future = recordService.searchRecords(input).toFuture().exceptionally(error -> {
+        return recordService.searchRecords(input).toFuture().exceptionally(error -> {
             logger.error("Error searching records:", error);
 
             return null;
         });
-
-        return future;
     }
 
     public CompletableFuture<List<Map<String, Object>>> searchRecords(String resource) {
         return searchRecords(resource, null);
+    }
+
+    /**
+     * Creates a new issue.
+     *
+     * @param input The input data for creating the issue.
+     * @return A CompletableFuture that will be completed with the created issue or completed
+     *         exceptionally if there are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<Issue> createIssue(CreateIssueInput input) {
+        IssueService issueService = new IssueService(this.graphqlClient);
+
+        return issueService.createIssue(input).toFuture().exceptionally(error -> {
+            logger.error("Error creating issue:", error);
+            return null;
+        });
+    }
+
+    /**
+     * Creates a new issue or updates an existing one. The specific behavior (create vs. update)
+     * might depend on the presence of an idempotency key or an ID in the input.
+     *
+     * @param input The input data for upserting the issue.
+     * @return A CompletableFuture that will be completed with the upserted issue or completed
+     *         exceptionally if there are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<Issue> upsertIssue(UpsertIssueInput input) {
+        IssueService issueService = new IssueService(this.graphqlClient);
+
+        return issueService.upsertIssue(input).toFuture().exceptionally(error -> {
+            logger.error("Error upserting issue:", error);
+            return null;
+        });
     }
 }
