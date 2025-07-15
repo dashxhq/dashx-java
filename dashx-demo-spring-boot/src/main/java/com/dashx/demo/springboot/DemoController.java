@@ -91,6 +91,7 @@ public class DemoController {
         builder.title(title);
         builder.issueType(issueType);
         builder.issueStatus(issueStatus);
+        builder.labels(List.of("Test1", "Test2"));
 
         CreateIssueInput input = builder.build();
 
