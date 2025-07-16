@@ -1,45 +1,62 @@
 package com.dashx.graphql;
 
-import com.netflix.graphql.dgs.client.codegen.GraphQLQueryRequest;
-import reactor.core.publisher.Mono;
-
 import com.dashx.DashXGraphQLClient;
-import com.dashx.graphql.generated.client.CreateIssueGraphQLQuery;
-import com.dashx.graphql.generated.client.IssueProjectionRoot;
-import com.dashx.graphql.generated.client.UpsertIssueGraphQLQuery;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.Issue;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
-import com.dashx.graphql.utils.Projections;
+import java.util.Map;
+import reactor.core.publisher.Mono;
 
 public class IssueService {
     private final DashXGraphQLClient client;
+    private final String fullIssueProjection;
 
     public IssueService(DashXGraphQLClient client) {
         this.client = client;
+        this.fullIssueProjection = """
+                {
+                    id
+                    workspaceId
+                    issueStatusId
+                    createdById
+                    environmentId
+                    spaceId
+                    parentId
+                    assigneeId
+                    title
+                    description
+                    position
+                    properties
+                    createdAt
+                    updatedAt
+                    issueTypeId
+                    dueAt
+                    number
+                    idempotencyKey
+                    priority
+                }
+                """;
     }
 
     public Mono<Issue> createIssue(CreateIssueInput input) {
-        CreateIssueGraphQLQuery query = CreateIssueGraphQLQuery.newRequest().input(input).build();
+        String query =
+                "mutation CreateIssue($input: CreateIssueInput!) { createIssue(input: $input) "
+                        + this.fullIssueProjection + " }";
 
-        IssueProjectionRoot<?, ?> projection = Projections.fullIssueProjection();
+        Map<String, Object> variables = Map.of("input", input);
 
-        GraphQLQueryRequest request = new GraphQLQueryRequest(query, projection);
-
-        return client.execute(request.serialize()).map(response -> {
-            return response.extractValueAsObject("createIssue", Issue.class);
-        });
+        return client.execute(query, variables)
+                .map(response -> response.extractValueAsObject("createIssue", Issue.class));
     }
 
     public Mono<Issue> upsertIssue(UpsertIssueInput input) {
-        UpsertIssueGraphQLQuery query = UpsertIssueGraphQLQuery.newRequest().input(input).build();
+        String query =
+                "mutation UpsertIssue($input: UpsertIssueInput!) { upsertIssue(input: $input) "
+                        + this.fullIssueProjection + " }";
 
-        IssueProjectionRoot<?, ?> projection = Projections.fullIssueProjection();
+        Map<String, Object> variables = Map.of("input", input);
 
-        GraphQLQueryRequest request = new GraphQLQueryRequest(query, projection);
-
-        return client.execute(request.serialize()).map(response -> {
-            return response.extractValueAsObject("upsertIssue", Issue.class);
-        });
+        return client.execute(query, variables)
+                .map(response -> response.extractValueAsObject("upsertIssue", Issue.class));
     }
 }

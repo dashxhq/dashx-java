@@ -6,6 +6,7 @@ import com.netflix.graphql.dgs.client.MonoGraphQLClient;
 import com.netflix.graphql.dgs.client.WebClientGraphQLClient;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -20,12 +21,15 @@ public class DashXGraphQLClient {
         this.webClientGraphQLClient = MonoGraphQLClient.createWithWebClient(webClient);
     }
 
-    public Mono<GraphQLResponse> execute(String query) throws RuntimeException {
-        return this.webClientGraphQLClient.reactiveExecuteQuery(query).doOnNext(response -> {
-            List<GraphQLError> errors = response.getErrors();
-            if (errors != null && !errors.isEmpty()) {
-                throw new RuntimeException(errors.toString());
-            }
-        });
+    public Mono<GraphQLResponse> execute(String query, Map<String, ?> variables)
+            throws RuntimeException {
+        return this.webClientGraphQLClient.reactiveExecuteQuery(query, variables)
+                .doOnNext(response -> {
+                    List<GraphQLError> errors = response.getErrors();
+
+                    if (errors != null && !errors.isEmpty()) {
+                        throw new RuntimeException(errors.toString());
+                    }
+                });
     }
 }

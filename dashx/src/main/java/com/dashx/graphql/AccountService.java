@@ -1,32 +1,46 @@
 package com.dashx.graphql;
 
-import com.netflix.graphql.dgs.client.codegen.GraphQLQueryRequest;
+import java.util.Map;
 import reactor.core.publisher.Mono;
 
-import com.dashx.graphql.generated.client.IdentifyAccountGraphQLQuery;
-import com.dashx.graphql.generated.client.IdentifyAccountProjectionRoot;
 import com.dashx.graphql.generated.types.Account;
 import com.dashx.graphql.generated.types.IdentifyAccountInput;
 import com.dashx.DashXGraphQLClient;
-import com.dashx.graphql.utils.Projections;
 
 public class AccountService {
     private final DashXGraphQLClient client;
+    private final String fullAccountProjection;
 
     public AccountService(DashXGraphQLClient client) {
         this.client = client;
+        this.fullAccountProjection = """
+                {
+                    id
+                    environmentId
+                    email
+                    phone
+                    fullName
+                    name
+                    firstName
+                    lastName
+                    avatar
+                    timeZone
+                    uid
+                    anonymousUid
+                    createdAt
+                    updatedAt
+                }
+                """;
     }
 
     public Mono<Account> identifyAccount(IdentifyAccountInput input) {
-        IdentifyAccountGraphQLQuery query =
-                IdentifyAccountGraphQLQuery.newRequest().input(input).build();
+        String query =
+                "mutation IdentifyAccount($input: IdentifyAccountInput!) { identifyAccount(input: $input) "
+                        + this.fullAccountProjection + " }";
 
-        IdentifyAccountProjectionRoot<?, ?> projection = Projections.fullAccountProjection();
+        Map<String, Object> variables = Map.of("input", input);
 
-        GraphQLQueryRequest request = new GraphQLQueryRequest(query, projection);
-
-        return client.execute(request.serialize()).map(response -> {
-            return response.extractValueAsObject("identifyAccount", Account.class);
-        });
+        return client.execute(query, variables)
+                .map(response -> response.extractValueAsObject("identifyAccount", Account.class));
     }
 }

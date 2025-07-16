@@ -1,44 +1,62 @@
 package com.dashx.graphql;
 
-import com.netflix.graphql.dgs.client.codegen.GraphQLQueryRequest;
 import java.util.List;
 import java.util.Map;
 import reactor.core.publisher.Mono;
 
-import com.dashx.graphql.generated.client.AssetGraphQLQuery;
-import com.dashx.graphql.generated.client.AssetProjectionRoot;
-import com.dashx.graphql.generated.client.AssetsListGraphQLQuery;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.DashXGraphQLClient;
-import com.dashx.graphql.utils.Projections;
 
 public class AssetService {
     private final DashXGraphQLClient client;
+    private final String fullAssetProjection;
 
     public AssetService(DashXGraphQLClient client) {
         this.client = client;
+        this.fullAssetProjection = """
+                {
+                    id
+                    workspaceId
+                    resourceId
+                    attributeId
+                    storageProviderId
+                    uploaderId
+                    data
+                    uploadStatus
+                    processingStatus
+                    name
+                    size
+                    mimeType
+                    uploadStatusReason
+                    processingStatusReason
+                    url
+                    staticVideoUrls
+                    staticAudioUrl
+                    createdAt
+                    updatedAt
+                }
+                """;
     }
 
     public Mono<Asset> getAsset(String id) {
-        AssetGraphQLQuery query = AssetGraphQLQuery.newRequest().id(id).build();
+        String query =
+                "query GetAsset($id: String!) { asset(id: $id) " + this.fullAssetProjection + " }";
+        Map<String, Object> variables = Map.of("id", id);
 
-        AssetProjectionRoot<?, ?> projection = Projections.fullAssetProjection();
-
-        GraphQLQueryRequest request = new GraphQLQueryRequest(query, projection);
-
-        return client.execute(request.serialize()).map(response -> {
-            return response.extractValueAsObject("asset", Asset.class);
-        });
+        return client.execute(query, variables)
+                .map(response -> response.extractValueAsObject("asset", Asset.class));
     }
 
     public Mono<List<Asset>> listAssets(Map<String, Object> filter, List<Map<String, Object>> order,
             Integer limit, Integer page) {
-        AssetProjectionRoot<?, ?> projection = Projections.fullAssetProjection();
+        String query =
+                "query ListAssets($filter: JSON, $order: [JSON], $limit: Int, $page: Int) { assetsList(filter: $filter, order: $order, limit: $limit, page: $page) "
+                        + this.fullAssetProjection + " }";
 
-        GraphQLQueryRequest request = new GraphQLQueryRequest(AssetsListGraphQLQuery.newRequest()
-                .filter(filter).order(order).limit(limit).page(page).build(), projection);
+        Map<String, Object> variables =
+                Map.of("filter", filter, "order", order, "limit", limit, "page", page);
 
-        return client.execute(request.serialize()).map(response -> {
+        return client.execute(query, variables).map(response -> {
             Asset[] assetsArray = response.extractValueAsObject("assetsList", Asset[].class);
             return List.of(assetsArray);
         });

@@ -1,31 +1,31 @@
 package com.dashx.graphql;
 
-import com.netflix.graphql.dgs.client.codegen.GraphQLQueryRequest;
+import java.util.Map;
 import reactor.core.publisher.Mono;
 
-import com.dashx.graphql.generated.client.TrackEventGraphQLQuery;
-import com.dashx.graphql.generated.client.TrackEventProjectionRoot;
 import com.dashx.graphql.generated.types.TrackEventResponse;
 import com.dashx.graphql.generated.types.TrackEventInput;
 import com.dashx.DashXGraphQLClient;
-import com.dashx.graphql.utils.Projections;
 
 public class EventService {
     private final DashXGraphQLClient client;
+    private final String fullTrackEventProjection;
 
     public EventService(DashXGraphQLClient client) {
         this.client = client;
+        this.fullTrackEventProjection = """
+                {
+                    success
+                }
+                """;
     }
 
     public Mono<TrackEventResponse> trackEvent(TrackEventInput input) {
-        TrackEventGraphQLQuery query = TrackEventGraphQLQuery.newRequest().input(input).build();
+        String query = "mutation TrackEvent($input: TrackEventInput!) { trackEvent(input: $input) "
+                + this.fullTrackEventProjection + " }";
+        Map<String, Object> variables = Map.of("input", input);
 
-        TrackEventProjectionRoot<?, ?> projection = Projections.fullTrackEventProjection();
-
-        GraphQLQueryRequest request = new GraphQLQueryRequest(query, projection);
-
-        return client.execute(request.serialize()).map(response -> {
-            return response.extractValueAsObject("trackEvent", TrackEventResponse.class);
-        });
+        return client.execute(query, variables).map(
+                response -> response.extractValueAsObject("trackEvent", TrackEventResponse.class));
     }
 }

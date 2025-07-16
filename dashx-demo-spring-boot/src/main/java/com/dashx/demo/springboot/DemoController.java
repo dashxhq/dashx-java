@@ -92,6 +92,7 @@ public class DemoController {
         builder.issueType(issueType);
         builder.issueStatus(issueStatus);
         builder.labels(List.of("Test1", "Test2"));
+        builder.properties(Map.of("some-property", "value"));
 
         CreateIssueInput input = builder.build();
 
