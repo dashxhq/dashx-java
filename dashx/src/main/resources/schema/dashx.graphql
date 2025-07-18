@@ -64,6 +64,7 @@ type Issue {
     spaceId: UUID
     parentId: UUID
     assigneeId: UUID
+    groupId: UUID
     priority: IssuePriority
     title: String!
     description: String
@@ -95,6 +96,7 @@ input CreateIssueInput {
     labels: [String!]
     dueAt: Timestamp
     idempotencyKey: String
+    groupId: UUID
 }
 
 input UpsertIssueInput {
@@ -104,6 +106,7 @@ input UpsertIssueInput {
     space: String
     parent: String
     assigneeId: UUID
+    groupId: UUID
     priority: IssuePriority
     title: String!
     description: String

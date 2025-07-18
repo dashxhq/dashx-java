@@ -90,6 +90,7 @@ public class DemoController {
 
         builder.title(title);
         builder.issueType(issueType);
+        builder.groupId("00000000-0000-0000-0000-000000000000"); // Needs to be a valid groupId
         builder.issueStatus(issueStatus);
         builder.labels(List.of("Test1", "Test2"));
         builder.properties(Map.of("some-property", "value"));

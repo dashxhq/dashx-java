@@ -23,6 +23,7 @@ public class IssueService {
                     spaceId
                     parentId
                     assigneeId
+                    groupId
                     title
                     description
                     position
