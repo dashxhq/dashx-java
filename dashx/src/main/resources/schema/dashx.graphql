@@ -61,6 +61,7 @@ type Issue {
     issueStatusId: UUID!
     createdById: UUID!
     environmentId: UUID!
+    requestedById: UUID
     spaceId: UUID
     parentId: UUID
     assigneeId: UUID
@@ -97,6 +98,9 @@ input CreateIssueInput {
     dueAt: Timestamp
     idempotencyKey: String
     group: String
+    requestedByUid: String
+    requestedByEmail: String
+    requestedByPhone: String
 }
 
 input UpsertIssueInput {

@@ -95,6 +95,10 @@ public class DemoController {
         builder.labels(List.of("Test1", "Test2"));
         builder.properties(Map.of("some-property", "value"));
 
+        builder.requestedByUid("123");
+        builder.requestedByEmail("test@test.com");
+        builder.requestedByPhone("0987654321");
+
         CreateIssueInput input = builder.build();
 
         return dashX.createIssue(input);
