@@ -95,9 +95,9 @@ public class DemoController {
         builder.labels(List.of("Test1", "Test2"));
         builder.properties(Map.of("some-property", "value"));
 
-        builder.requestedByUid("123");
-        builder.requestedByEmail("test@test.com");
-        builder.requestedByPhone("0987654321");
+        builder.requestedBy(Map.of("uid", "123", "name", "John Doe"));
+        // builder.requestedBy(Map.of("email", "test@test.com", "name", "John Doe"));
+        // builder.requestedBy(Map.of("phone", "0987654321", "name", "John Doe"));
 
         CreateIssueInput input = builder.build();
 

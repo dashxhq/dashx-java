@@ -98,9 +98,7 @@ input CreateIssueInput {
     dueAt: Timestamp
     idempotencyKey: String
     group: String
-    requestedByUid: String
-    requestedByEmail: String
-    requestedByPhone: String
+    requestedBy: JSON
 }
 
 input UpsertIssueInput {
