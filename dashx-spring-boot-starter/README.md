@@ -49,6 +49,31 @@ dashx.target-environment=production
 
 # Optional: Override the default base URL to connect to DashX
 dashx.base-url=https://...
+
+# Optional: Connection timeout in milliseconds (default: 10000)
+dashx.connection-timeout=10000
+
+# Optional: Response timeout in milliseconds (default: 30000)
+dashx.response-timeout=30000
+
+# Optional: Maximum number of connections in the pool (default: 500)
+dashx.max-connections=500
+
+# Optional: Maximum idle time for connections in milliseconds (default: 20000)
+dashx.max-idle-time=20000
+```
+
+### Connection Configuration
+
+The DashX client uses connection pooling and configurable timeouts to ensure reliable communication with the DashX API. You can fine-tune these settings based on your application's needs:
+
+- `dashx.connection-timeout`: Time to wait for establishing a connection (in milliseconds). Default: 10000ms (10 seconds).
+- `dashx.response-timeout`: Time to wait for receiving a response after the connection is established (in milliseconds). Default: 30000ms (30 seconds).
+- `dashx.max-connections`: Maximum number of connections in the connection pool. Default: 500.
+- `dashx.max-idle-time`: Maximum time a connection can remain idle in the pool before being closed (in milliseconds). Default: 20000ms (20 seconds).
+
+These settings help prevent connection timeouts and improve reliability, especially in high-load scenarios or when dealing with network latency.
+
 ```
 
 ## Usage
