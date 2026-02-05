@@ -13,9 +13,16 @@ public class DashXAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public DashX dashXClient(DashXProperties properties) {
-        DashXConfig config = new DashXConfig.Builder().baseUrl(properties.getBaseUrl())
-                .publicKey(properties.getPublicKey()).privateKey(properties.getPrivateKey())
-                .targetEnvironment(properties.getTargetEnvironment()).build();
+        DashXConfig config = new DashXConfig.Builder()
+                .baseUrl(properties.getBaseUrl())
+                .publicKey(properties.getPublicKey())
+                .privateKey(properties.getPrivateKey())
+                .targetEnvironment(properties.getTargetEnvironment())
+                .connectionTimeout(properties.getConnectionTimeout())
+                .responseTimeout(properties.getResponseTimeout())
+                .maxConnections(properties.getMaxConnections())
+                .maxIdleTime(properties.getMaxIdleTime())
+                .build();
 
         DashX client = DashX.getInstance();
         client.configure(config);

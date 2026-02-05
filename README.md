@@ -1,11 +1,170 @@
 # DashX SDK for Java
 
-## Usage
-### DashX for Spring Boot
+## Installation
 
-[dashx-spring-boot-starter](dashx-spring-boot-starter) is the fastest way to integrate with DashX in your Spring Boot applications.
+### Spring Boot
 
-See the [dashx-demo-spring-boot](dashx-demo-spring-boot) project for a complete example of how to use this starter.
+Add the Spring Boot starter dependency to your `build.gradle`:
+
+```gradle
+dependencies {
+    implementation 'com.dashx:dashx-spring-boot-starter:${version}'
+}
+```
+
+Or if you're using Maven, add to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>com.dashx</groupId>
+    <artifactId>dashx-spring-boot-starter</artifactId>
+    <version>${version}</version>
+</dependency>
+```
+
+### Standalone Java
+
+Add the core dependency to your `build.gradle`:
+
+```gradle
+dependencies {
+    implementation 'com.dashx:dashx:${version}'
+}
+```
+
+## Configuration
+
+### Option 1: Spring Boot (application.properties)
+
+Add the following properties to your `application.properties`:
+
+```properties
+# Required properties
+dashx.public-key=${DASHX_PUBLIC_KEY}
+dashx.private-key=${DASHX_PRIVATE_KEY}
+dashx.target-environment=${DASHX_TARGET_ENVIRONMENT}
+dashx.base-url=${DASHX_BASE_URL:https://api.dashx.com/graphql}
+
+# Optional: Connection and timeout configuration (defaults shown, all values in milliseconds)
+dashx.connection-timeout=10000
+dashx.response-timeout=30000
+dashx.max-connections=500
+dashx.max-idle-time=20000
+```
+
+The DashX client will be automatically configured and available for injection:
+
+```java
+@RestController
+public class MyController {
+    private final DashX dashX;
+
+    public MyController(DashX dashX) {
+        this.dashX = dashX;
+    }
+
+    @GetMapping("/identify")
+    public CompletableFuture<Account> identify(@RequestParam Map<String, Object> options) {
+        return dashX.identify(options);
+    }
+}
+```
+
+### Option 2: Direct Java Configuration
+
+If you're not using Spring Boot, configure DashX directly:
+
+```java
+DashXConfig config = new DashXConfig.Builder()
+    .publicKey("your-public-key")
+    .privateKey("your-private-key")
+    .targetEnvironment("production")
+    .baseUrl("https://api.dashx.com/graphql")
+    // Optional: customize timeouts (all values in milliseconds)
+    .connectionTimeout(15000)          // 15 seconds
+    .responseTimeout(45000)            // 45 seconds
+    .maxConnections(1000)              // Increase for high-load scenarios
+    .maxIdleTime(30000)                // 30 seconds
+    .build();
+
+DashX dashx = DashX.getInstance();
+dashx.configure(config);
+
+// Use the client
+dashx.track("button_clicked", "user123", Map.of("button", "submit"))
+    .thenAccept(response -> System.out.println("Event tracked!"))
+    .exceptionally(error -> {
+        System.err.println("Error: " + error.getMessage());
+        return null;
+    });
+```
+
+## Connection Configuration
+
+The SDK uses connection pooling and configurable timeouts for reliable communication with the DashX API:
+
+- **`connection-timeout`**: Time to establish a connection (default: 10000ms)
+- **`response-timeout`**: Time to receive complete response (default: 30000ms)
+- **`max-connections`**: Maximum connections in pool (default: 500)
+- **`max-idle-time`**: Maximum idle time before connection closure (default: 20000ms)
+
+### Recommended Values by Traffic Level
+
+#### Low Traffic (< 100 req/min)
+```properties
+dashx.connection-timeout=10000
+dashx.response-timeout=30000
+dashx.max-connections=100
+dashx.max-idle-time=20000
+```
+
+#### Medium Traffic (100-1000 req/min)
+```properties
+dashx.connection-timeout=10000
+dashx.response-timeout=30000
+dashx.max-connections=500
+dashx.max-idle-time=30000
+```
+
+#### High Traffic (> 1000 req/min)
+```properties
+dashx.connection-timeout=15000
+dashx.response-timeout=45000
+dashx.max-connections=1000
+dashx.max-idle-time=60000
+```
+
+#### Behind Proxy/Load Balancer
+```properties
+dashx.connection-timeout=20000
+dashx.response-timeout=60000
+dashx.max-connections=500
+dashx.max-idle-time=45000
+```
+
+## Troubleshooting
+
+### Connection Timeout Errors
+
+If you encounter "Connection prematurely closed BEFORE response" errors:
+
+1. **Increase timeouts** - Your network latency might be higher:
+   ```properties
+   dashx.response-timeout=60000
+   dashx.connection-timeout=20000
+   ```
+
+2. **Enable debug logging** - Add to `application.properties`:
+   ```properties
+   logging.level.reactor.netty=DEBUG
+   logging.level.com.dashx=DEBUG
+   ```
+
+## Examples
+
+See the [dashx-demo-spring-boot](dashx-demo-spring-boot) project for a complete working example.
+
+For detailed Spring Boot starter documentation, see [dashx-spring-boot-starter README](dashx-spring-boot-starter/README.md).
 
 ## Development
 
