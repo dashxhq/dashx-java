@@ -278,7 +278,7 @@ signing.password=GPG_KEY_PASSPHRASE
 ```
 
 #### Publishing a new version
-Please make sure you've set the new version number in the [build file](dashx/build.gradle.kts) before publishing.
+Please make sure you've set the new version number in the [build file](dashx/build.gradle) before publishing.
 
 To publish the new version, run:
 ```
