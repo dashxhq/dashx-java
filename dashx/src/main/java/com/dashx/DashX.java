@@ -245,7 +245,12 @@ public class DashX {
                         .lastName((String) options.get(Constants.UserAttributes.LAST_NAME)).build();
 
         logger.debug("Identifying account with uid: '{}', anonymousUid: '{}'", uid, anonymousUid);
-        return getAccountService().identifyAccount(input).toFuture();
+        return getAccountService().identifyAccount(input).toFuture()
+                .thenApply(account -> {
+                    this.accountUid = account.getUid();
+                    this.accountAnonymousUid = account.getAnonymousUid();
+                    return account;
+                });
     }
 
     /**

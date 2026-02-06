@@ -44,7 +44,7 @@ public class RecordService {
             List<Map<String, Object>> results =
                     response.extractValueAsObject("searchRecords", List.class);
 
-            return results;
+            return results != null ? results : List.of();
         });
     }
 }
