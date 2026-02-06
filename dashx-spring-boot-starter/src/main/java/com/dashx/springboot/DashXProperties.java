@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "dashx")
 public class DashXProperties {
-    private String baseUrl = "https://api.dashx.com/graphql";
+    private String baseUrl = com.dashx.Constants.DEFAULT_BASE_URL;
     private String publicKey;
     private String privateKey;
     private String targetEnvironment;
@@ -26,6 +26,10 @@ public class DashXProperties {
     private Integer maxIdleTime = 20000;
 
     public String getBaseUrl() {
+        if (baseUrl != null && baseUrl.isEmpty()) {
+            return null;
+        }
+
         return baseUrl;
     }
 

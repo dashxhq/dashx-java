@@ -23,8 +23,8 @@ repositories {
 dependencies {
     api project(':dashx')
 
-    implementation 'org.springframework.boot:spring-boot-autoconfigure:3.4.1'
-    implementation 'org.springframework.boot:spring-boot-starter:3.4.1'
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure:3.4.1'
+    compileOnly 'org.springframework.boot:spring-boot-starter:3.4.1'
 }
 
 tasks.named('test') {

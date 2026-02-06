@@ -1,5 +1,6 @@
 package com.dashx.graphql;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import reactor.core.publisher.Mono;
@@ -77,8 +78,11 @@ public class AssetService {
                 "query ListAssets($filter: JSON, $order: [JSON], $limit: Int, $page: Int) { assetsList(filter: $filter, order: $order, limit: $limit, page: $page) "
                         + this.fullAssetProjection + " }";
 
-        Map<String, Object> variables =
-                Map.of("filter", filter, "order", order, "limit", limit, "page", page);
+        Map<String, Object> variables = new HashMap<>();
+        if (filter != null) variables.put("filter", filter);
+        if (order != null) variables.put("order", order);
+        if (limit != null) variables.put("limit", limit);
+        if (page != null) variables.put("page", page);
 
         return client.execute(query, variables).map(response -> {
             Asset[] assetsArray = response.extractValueAsObject("assetsList", Asset[].class);

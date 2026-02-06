@@ -1,5 +1,6 @@
 package com.dashx;
 
+import com.dashx.exception.DashXConfigurationException;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,7 +17,7 @@ class DashXConfigTest {
         assertEquals("test-public-key", config.getPublicKey());
         assertEquals("test-private-key", config.getPrivateKey());
         assertEquals("test", config.getTargetEnvironment());
-        assertEquals("https://api.dashx.com/graphql", config.getBaseUrl());
+        assertEquals(Constants.DEFAULT_BASE_URL, config.getBaseUrl());
     }
 
     @Test
@@ -59,7 +60,7 @@ class DashXConfigTest {
 
     @Test
     void testBuilderThrowsExceptionWhenPublicKeyIsNull() {
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
                     .privateKey("test-private-key")
                     .targetEnvironment("test")
@@ -69,7 +70,7 @@ class DashXConfigTest {
 
     @Test
     void testBuilderThrowsExceptionWhenPrivateKeyIsNull() {
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
                     .publicKey("test-public-key")
                     .targetEnvironment("test")
@@ -79,10 +80,58 @@ class DashXConfigTest {
 
     @Test
     void testBuilderThrowsExceptionWhenTargetEnvironmentIsNull() {
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
                     .publicKey("test-public-key")
                     .privateKey("test-private-key")
+                    .build();
+        });
+    }
+
+    @Test
+    void testBuilderThrowsExceptionForNegativeConnectionTimeout() {
+        assertThrows(DashXConfigurationException.class, () -> {
+            new DashXConfig.Builder()
+                    .publicKey("key")
+                    .privateKey("secret")
+                    .targetEnvironment("test")
+                    .connectionTimeout(-1)
+                    .build();
+        });
+    }
+
+    @Test
+    void testBuilderThrowsExceptionForZeroResponseTimeout() {
+        assertThrows(DashXConfigurationException.class, () -> {
+            new DashXConfig.Builder()
+                    .publicKey("key")
+                    .privateKey("secret")
+                    .targetEnvironment("test")
+                    .responseTimeout(0)
+                    .build();
+        });
+    }
+
+    @Test
+    void testBuilderThrowsExceptionForNegativeMaxConnections() {
+        assertThrows(DashXConfigurationException.class, () -> {
+            new DashXConfig.Builder()
+                    .publicKey("key")
+                    .privateKey("secret")
+                    .targetEnvironment("test")
+                    .maxConnections(-5)
+                    .build();
+        });
+    }
+
+    @Test
+    void testBuilderThrowsExceptionForZeroMaxIdleTime() {
+        assertThrows(DashXConfigurationException.class, () -> {
+            new DashXConfig.Builder()
+                    .publicKey("key")
+                    .privateKey("secret")
+                    .targetEnvironment("test")
+                    .maxIdleTime(0)
                     .build();
         });
     }

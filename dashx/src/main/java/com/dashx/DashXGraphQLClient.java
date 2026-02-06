@@ -24,6 +24,7 @@ import reactor.netty.resources.ConnectionProvider;
  */
 public class DashXGraphQLClient {
     private final WebClientGraphQLClient webClientGraphQLClient;
+    private final ConnectionProvider connectionProvider;
 
     /**
      * Constructs a new DashXGraphQLClient with the specified configuration.
@@ -45,7 +46,7 @@ public class DashXGraphQLClient {
                 ? config.getMaxIdleTime() : 20000;
 
         // Configure connection pool
-        ConnectionProvider connectionProvider = ConnectionProvider.builder("dashx-pool")
+        this.connectionProvider = ConnectionProvider.builder("dashx-pool")
                 .maxConnections(maxConnections)
                 .maxIdleTime(Duration.ofMillis(maxIdleTime))
                 .maxLifeTime(Duration.ofSeconds(60))
@@ -89,5 +90,13 @@ public class DashXGraphQLClient {
 
                     return Mono.just(response);
                 });
+    }
+
+    /**
+     * Closes the underlying connection pool and releases resources.
+     * Should be called when this client is no longer needed.
+     */
+    public void close() {
+        connectionProvider.dispose();
     }
 }

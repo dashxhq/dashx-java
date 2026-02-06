@@ -1,6 +1,8 @@
 package com.dashx;
 
+import com.dashx.exception.DashXConfigurationException;
 import com.dashx.exception.DashXValidationException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ class DashXValidationTest {
 
     @BeforeEach
     void setUp() {
+        DashX.resetInstances();
         dashx = DashX.getInstance("test-validation");
 
         // Configure with valid settings
@@ -29,12 +32,29 @@ class DashXValidationTest {
         dashx.configure(config);
     }
 
+    @AfterEach
+    void tearDown() {
+        DashX.resetInstances();
+    }
+
     @Test
     void testConfigureWithNullConfigThrowsException() {
         DashX instance = DashX.getInstance("test-null-config");
 
         assertThrows(DashXValidationException.class, () -> {
             instance.configure(null);
+        });
+    }
+
+    @Test
+    void testUnconfiguredClientThrowsException() {
+        DashX unconfigured = DashX.getInstance("test-unconfigured");
+
+        Map<String, Object> options = new HashMap<>();
+        options.put("email", "test@example.com");
+
+        assertThrows(DashXConfigurationException.class, () -> {
+            unconfigured.identify(options);
         });
     }
 
@@ -162,5 +182,14 @@ class DashXValidationTest {
         DashX defaultInstance = DashX.getInstance();
         assertNotNull(defaultInstance);
         assertEquals("default", defaultInstance.getInstanceName());
+    }
+
+    @Test
+    void testRemoveInstance() {
+        DashX instance1 = DashX.getInstance("removable");
+        DashX.removeInstance("removable");
+        DashX instance2 = DashX.getInstance("removable");
+
+        assertNotSame(instance1, instance2);
     }
 }
