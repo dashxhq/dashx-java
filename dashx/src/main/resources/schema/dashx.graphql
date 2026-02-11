@@ -14,6 +14,7 @@ type Mutation {
     trackEvent(input: TrackEventInput!): TrackEventResponse!
     createIssue(input: CreateIssueInput!): Issue!
     upsertIssue(input: UpsertIssueInput!): Issue!
+    sendMessage(input: SendMessageInput!): Message!
 }
 
 type Account {
@@ -79,6 +80,21 @@ type Issue {
     idempotencyKey: String
 }
 
+type Message {
+    id: UUID!
+    integrationId: UUID
+    broadcastId: UUID
+    conversationId: UUID
+    senderId: UUID
+    channel: ConversationChannel
+    subChannel: ConversationSubChannel
+    renderedContent: JSON
+    data: JSON
+    attachments: [JSON]
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
+}
+
 type TrackEventResponse {
     success: Boolean!
 }
@@ -129,6 +145,15 @@ input IdentifyAccountInput {
     systemContext: JSON
 }
 
+input SendMessageInput {
+    conversationId: UUID
+    integrationId: UUID
+    templateSubkind: TemplateSubkind
+    content: JSON
+    templateId: UUID
+    data: JSON
+}
+
 input SearchRecordsInput {
     resource: String!
     filter: JSON
@@ -171,4 +196,34 @@ enum IssuePriority {
     MEDIUM
     HIGH
     URGENT
+}
+
+enum ConversationChannel {
+    EMAIL
+    SMS
+    PUSH
+    CHAT
+    INAPP
+}
+
+enum ConversationSubChannel {
+    IOS
+    ANDROID
+    WEB
+    WHATSAPP
+    SIGNAL
+    TELEGRAM
+    SLACK
+    MICROSOFTTEAMS
+    DASHX
+}
+
+enum TemplateSubkind {
+    SCREEN
+    OVERLAY
+    EMAIL
+    SMS
+    PUSH
+    WHATSAPP
+    INAPP
 }

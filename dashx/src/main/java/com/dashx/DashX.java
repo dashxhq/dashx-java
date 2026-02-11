@@ -14,10 +14,12 @@ import org.springframework.util.MultiValueMap;
 import com.dashx.graphql.generated.types.Account;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.graphql.generated.types.Issue;
+import com.dashx.graphql.generated.types.Message;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
 import com.dashx.graphql.generated.types.IdentifyAccountInput;
 import com.dashx.graphql.generated.types.SearchRecordsInput;
+import com.dashx.graphql.generated.types.SendMessageInput;
 import com.dashx.graphql.generated.types.TrackEventInput;
 import com.dashx.graphql.generated.types.TrackEventResponse;
 
@@ -26,6 +28,7 @@ import com.dashx.graphql.AssetService;
 import com.dashx.graphql.EventService;
 import com.dashx.graphql.RecordService;
 import com.dashx.graphql.IssueService;
+import com.dashx.graphql.MessageService;
 import com.dashx.graphql.utils.SearchRecordsOptions;
 import com.dashx.exception.DashXConfigurationException;
 import com.dashx.exception.DashXValidationException;
@@ -55,6 +58,7 @@ public class DashX {
     private EventService eventService;
     private RecordService recordService;
     private IssueService issueService;
+    private MessageService messageService;
 
     private DashX(String instanceName) {
         this.instanceName = instanceName;
@@ -114,6 +118,7 @@ public class DashX {
         this.eventService = null;
         this.recordService = null;
         this.issueService = null;
+        this.messageService = null;
     }
 
     private DashXGraphQLClient createGraphqlClient() {
@@ -191,6 +196,13 @@ public class DashX {
             issueService = new IssueService(graphqlClient);
         }
         return issueService;
+    }
+
+    private MessageService getMessageService() {
+        if (messageService == null) {
+            messageService = new MessageService(graphqlClient);
+        }
+        return messageService;
     }
 
     private String generateAccountAnonymousUid() {
@@ -438,5 +450,26 @@ public class DashX {
 
         logger.debug("Upserting issue");
         return getIssueService().upsertIssue(input).toFuture();
+    }
+
+    /**
+     * Sends a message with the specified input.
+     *
+     * @param input The input data for sending the message.
+     * @return A CompletableFuture that will be completed with the sent message or completed
+     *         exceptionally if there are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<Message> sendMessage(SendMessageInput input) {
+        if (input == null) {
+            CompletableFuture<Message> future = new CompletableFuture<>();
+            future.completeExceptionally(new DashXValidationException(
+                    "SendMessageInput cannot be null"));
+            return future;
+        }
+
+        ensureConfigured();
+
+        logger.debug("Sending message");
+        return getMessageService().sendMessage(input).toFuture();
     }
 }
