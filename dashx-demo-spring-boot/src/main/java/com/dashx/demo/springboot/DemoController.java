@@ -4,8 +4,10 @@ import com.dashx.DashX;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.Issue;
+import com.dashx.graphql.generated.types.Message;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
 import com.dashx.graphql.utils.SearchRecordsOptions;
+import com.dashx.message.DashXMessage;
 import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
 import java.util.List;
@@ -194,6 +196,84 @@ public class DemoController {
 
         return dashX.upsertIssue(input).exceptionally(ex -> {
             throw new RuntimeException("Failed to upsert issue with title '" + title + "': " + ex.getMessage(), ex);
+        });
+    }
+
+    @GetMapping("/send-whatsapp-text")
+    public CompletableFuture<Message> sendWhatsAppText(
+            @RequestParam String conversationId,
+            @RequestParam String body) {
+
+        return DashXMessage.whatsapp()
+                .text(body)
+                .conversationId(conversationId)
+                .send(dashX)
+                .exceptionally(ex -> {
+                    throw new RuntimeException(
+                            "Failed to send WhatsApp text message: " + ex.getMessage(), ex);
+                });
+    }
+
+    @GetMapping("/send-whatsapp-template")
+    public CompletableFuture<Message> sendWhatsAppTemplate(
+            @RequestParam String conversationId,
+            @RequestParam String templateName,
+            @RequestParam String language,
+            @RequestParam(required = false) List<String> bodyParams) {
+
+        return DashXMessage.whatsapp()
+                .template(templateName)
+                .language(language)
+                .bodyParameters(bodyParams)
+                .conversationId(conversationId)
+                .send(dashX)
+                .exceptionally(ex -> {
+                    throw new RuntimeException(
+                            "Failed to send WhatsApp template message: " + ex.getMessage(), ex);
+                });
+    }
+
+    @GetMapping("/send-whatsapp-interactive")
+    public CompletableFuture<Message> sendWhatsAppInteractive(
+            @RequestParam String conversationId,
+            @RequestParam String body) {
+
+        return DashXMessage.whatsapp()
+                .interactive()
+                .body(body)
+                .button("opt1", "Option 1")
+                .button("opt2", "Option 2")
+                .conversationId(conversationId)
+                .send(dashX)
+                .exceptionally(ex -> {
+                    throw new RuntimeException(
+                            "Failed to send WhatsApp interactive message: " + ex.getMessage(), ex);
+                });
+    }
+
+    @GetMapping("/send-email")
+    public CompletableFuture<Message> sendEmail(
+            @RequestParam String conversationId,
+            @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String htmlBody,
+            @RequestParam(required = false) String plainBody) {
+
+        var builder = DashXMessage.email()
+                .conversationId(conversationId);
+
+        if (subject != null) {
+            builder.subject(subject);
+        }
+        if (htmlBody != null) {
+            builder.htmlBody(htmlBody);
+        }
+        if (plainBody != null) {
+            builder.plainBody(plainBody);
+        }
+
+        return builder.send(dashX).exceptionally(ex -> {
+            throw new RuntimeException(
+                    "Failed to send email: " + ex.getMessage(), ex);
         });
     }
 }
