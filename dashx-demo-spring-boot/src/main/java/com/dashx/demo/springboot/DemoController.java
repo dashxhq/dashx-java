@@ -2,6 +2,8 @@ package com.dashx.demo.springboot;
 
 import com.dashx.DashX;
 import com.dashx.graphql.generated.types.Asset;
+import com.dashx.graphql.generated.types.Broadcast;
+import com.dashx.graphql.generated.types.CreateBroadcastInput;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.Issue;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
@@ -194,6 +196,61 @@ public class DemoController {
 
         return dashX.upsertIssue(input).exceptionally(ex -> {
             throw new RuntimeException("Failed to upsert issue with title '" + title + "': " + ex.getMessage(), ex);
+        });
+    }
+
+    @GetMapping("/send-push-message")
+    public CompletableFuture<Broadcast> sendPushMessage(
+            @RequestParam List<String> to,
+            @RequestParam(required = false) String templateId,
+            @RequestParam(required = false) String templateIdentifier,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String body,
+            @RequestParam(required = false) String name) {
+        CreateBroadcastInput.Builder builder = CreateBroadcastInput.newBuilder();
+
+        builder.templateSubkind(com.dashx.graphql.generated.types.TemplateSubkind.PUSH);
+
+        boolean hasTemplateId = templateId != null && !templateId.isEmpty();
+        boolean hasTemplateIdentifier = templateIdentifier != null && !templateIdentifier.isEmpty();
+        boolean hasTitleAndBody =
+                title != null && !title.isEmpty() && body != null && !body.isEmpty();
+
+        if (!hasTemplateId && !hasTemplateIdentifier && !hasTitleAndBody) {
+            throw new IllegalArgumentException(
+                    "You must provide either templateId, templateIdentifier, or both title and body.");
+        }
+
+        if (templateId != null && !templateId.isEmpty()) {
+            builder.templateId(templateId);
+        }
+
+        if (templateIdentifier != null && !templateIdentifier.isEmpty()) {
+            builder.templateIdentifier(templateIdentifier);
+        }
+
+        if (name != null && !name.isEmpty()) {
+            builder.name(name);
+        }
+
+        // Example data payload including recipients
+        Map<String, Object> content = new HashMap<>();
+
+        content.put("to", to);
+
+        if (title != null && !title.isEmpty()) {
+            content.put("title", title);
+        }
+        if (body != null && !body.isEmpty()) {
+            content.put("body", body);
+        }
+
+        builder.content(content);
+
+        CreateBroadcastInput input = builder.build();
+
+        return dashX.sendBroadcast(input).exceptionally(ex -> {
+            throw new RuntimeException("Failed to create broadcast: " + ex.getMessage(), ex);
         });
     }
 }

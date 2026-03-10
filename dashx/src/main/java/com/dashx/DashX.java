@@ -14,18 +14,21 @@ import org.springframework.util.MultiValueMap;
 import com.dashx.graphql.generated.types.Account;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.graphql.generated.types.Issue;
+import com.dashx.graphql.generated.types.Broadcast;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
 import com.dashx.graphql.generated.types.IdentifyAccountInput;
 import com.dashx.graphql.generated.types.SearchRecordsInput;
 import com.dashx.graphql.generated.types.TrackEventInput;
 import com.dashx.graphql.generated.types.TrackEventResponse;
+import com.dashx.graphql.generated.types.CreateBroadcastInput;
 
 import com.dashx.graphql.AccountService;
 import com.dashx.graphql.AssetService;
 import com.dashx.graphql.EventService;
 import com.dashx.graphql.RecordService;
 import com.dashx.graphql.IssueService;
+import com.dashx.graphql.BroadcastService;
 import com.dashx.graphql.utils.SearchRecordsOptions;
 import com.dashx.exception.DashXConfigurationException;
 import com.dashx.exception.DashXValidationException;
@@ -55,6 +58,7 @@ public class DashX {
     private EventService eventService;
     private RecordService recordService;
     private IssueService issueService;
+    private BroadcastService broadcastService;
 
     private DashX(String instanceName) {
         this.instanceName = instanceName;
@@ -114,6 +118,7 @@ public class DashX {
         this.eventService = null;
         this.recordService = null;
         this.issueService = null;
+        this.broadcastService = null;
     }
 
     private DashXGraphQLClient createGraphqlClient() {
@@ -191,6 +196,13 @@ public class DashX {
             issueService = new IssueService(graphqlClient);
         }
         return issueService;
+    }
+
+    private BroadcastService getBroadcastService() {
+        if (broadcastService == null) {
+            broadcastService = new BroadcastService(graphqlClient);
+        }
+        return broadcastService;
     }
 
     private String generateAccountAnonymousUid() {
@@ -438,5 +450,26 @@ public class DashX {
 
         logger.debug("Upserting issue");
         return getIssueService().upsertIssue(input).toFuture();
+    }
+
+    /**
+     * Creates a new broadcast using the CreateBroadcast mutation.
+     *
+     * @param input The input data for creating the broadcast.
+     * @return A CompletableFuture that will be completed with the created Broadcast or completed
+     *         exceptionally if there are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<Broadcast> sendBroadcast(CreateBroadcastInput input) {
+        if (input == null) {
+            CompletableFuture<Broadcast> future = new CompletableFuture<>();
+            future.completeExceptionally(new DashXValidationException(
+                    "CreateBroadcastInput cannot be null"));
+            return future;
+        }
+
+        ensureConfigured();
+
+        logger.debug("Creating broadcast");
+        return getBroadcastService().createBroadcast(input).toFuture();
     }
 }

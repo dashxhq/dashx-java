@@ -83,6 +83,30 @@ type TrackEventResponse {
     success: Boolean!
 }
 
+type Broadcast {
+    id: UUID!
+    templateSubkind: TemplateSubkind!
+    environmentId: UUID!
+    campaignId: UUID
+    integrationId: UUID
+    templateId: UUID
+    content: JSON
+    name: String
+    data: JSON
+    status: BroadcastStatus!
+    failureReason: String
+    queuedMessagesCount: Int
+    sentMessagesCount: Int
+    deliveredMessagesCount: Int
+    failedMessagesCount: Int
+    openedMessagesCount: Int
+    clickedMessagesCount: Int
+    scheduledAt: Timestamp
+    custom: JSON
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
+}
+
 input CreateIssueInput {
     issueType: String
     issueStatus: String
@@ -151,6 +175,21 @@ input TrackEventInput {
     systemContext: JSON
 }
 
+input CreateBroadcastInput {
+    templateSubkind: TemplateSubkind!
+    integrationId: UUID
+    templateId: UUID
+    templateIdentifier: String
+    content: JSON
+    name: String
+    data: JSON
+    isDraft: Boolean
+    scheduledAt: Timestamp
+    targetEnvironment: String
+    custom: JSON
+    campaignId: UUID
+}
+
 enum AssetProcessingStatus {
     PENDING
     COMPLETED
@@ -171,4 +210,23 @@ enum IssuePriority {
     MEDIUM
     HIGH
     URGENT
+}
+
+enum TemplateSubkind {
+    SCREEN
+    OVERLAY
+    EMAIL
+    SMS
+    PUSH
+    WHATSAPP
+    IN_APP
+}
+
+enum BroadcastStatus {
+    DRAFT
+    SCHEDULED
+    PENDING
+    QUEUED
+    PROCESSED
+    FAILED
 }

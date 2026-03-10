@@ -257,6 +257,33 @@ http://localhost:8081/upsert-issue?title=Fix+payment+processing+-+Updated&issueT
 http://localhost:8081/upsert-issue?title=New+feature+request&issueType=feature
 ```
 
+### 6. Send Push Message
+
+Create a push broadcast and send it to one or more recipients. You must provide either a template (by ID or identifier) or inline title and body.
+
+**Endpoint:** `GET /send-push-message`
+
+**Parameters:**
+- `to` (required) - List of recipient identifiers (e.g., device tokens or user IDs). Pass multiple `to` query params.
+- `templateId` (optional) - Template UUID (provide this **or** `templateIdentifier` **or** both `title` and `body`)
+- `templateIdentifier` (optional) - Template identifier string (provide this **or** `templateId` **or** both `title` and `body`)
+- `title` (optional) - Push notification title (must be used together with `body` if not using a template)
+- `body` (optional) - Push notification body (must be used together with `title` if not using a template)
+- `name` (optional) - Name for the broadcast
+
+**Validation:** At least one of the following must be provided:
+- `templateId`, or
+- `templateIdentifier`, or
+- both `title` and `body`
+
+**Example URLs:**
+
+```bash
+http://localhost:8081/send-push-message?to=android%3AePV9HxLCR1SoI5kIHWH-TB%3AAPA91bFR-AcvAWWM0JIy98FjJbojyx3HX6s1Ho61dX6vJKl2JgWdPn6BeSwZ9VQ3X-VplLe2tDFaEPwSg2R2QAOfGhjxZ4_KTSserPs_d39hjzv7CzIMQqA&title=Reminder&body=Don%27t+forget&name=Daily+Reminder
+
+http://localhost:8081/send-push-message?to=account_uid%3A352&title=Reminder&body=Don%27t+forget&name=Daily+Reminder
+```
+
 ## Configuration
 
 The application is configured via environment variables or `application.properties`:
@@ -348,6 +375,16 @@ curl "http://localhost:8081/create-issue?title=Bug+in+login&issueType=bug&issueS
 
 ```bash
 curl "http://localhost:8081/upsert-issue?title=Payment+fix&issueType=bug&idempotencyKey=payment-2024"
+```
+
+### Send Push Message
+
+```bash
+# With template ID
+curl "http://localhost:8081/send-push-message?to=device_1&to=device_2&templateId=your-template-uuid"
+
+# With inline title and body
+curl "http://localhost:8081/send-push-message?to=user_123&title=Hello&body=Welcome+to+our+app"
 ```
 
 ## Error Handling
