@@ -1,5 +1,6 @@
 package com.dashx.graphql;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import reactor.core.publisher.Mono;
@@ -40,11 +41,21 @@ public class RecordService {
         Map<String, Object> variables = Map.of("input", input);
 
         return client.execute(query, variables).map(response -> {
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> results =
-                    response.extractValueAsObject("searchRecords", List.class);
+            Object raw = response.extractValueAsObject("searchRecords", Object.class);
 
-            return results != null ? results : List.of();
+            if (!(raw instanceof List<?> rawList)) {
+                return List.<Map<String, Object>>of();
+            }
+
+            List<Map<String, Object>> results = new ArrayList<>(rawList.size());
+            for (Object item : rawList) {
+                if (item instanceof Map<?, ?> map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> typedMap = (Map<String, Object>) map;
+                    results.add(typedMap);
+                }
+            }
+            return results;
         });
     }
 }
