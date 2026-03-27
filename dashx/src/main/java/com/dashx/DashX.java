@@ -47,8 +47,8 @@ public class DashX {
     private DashXConfig config;
 
     // Account variables
-    private String accountAnonymousUid;
-    private String accountUid;
+    private volatile String accountAnonymousUid;
+    private volatile String accountUid;
 
     private DashXGraphQLClient graphqlClient;
 
@@ -112,13 +112,13 @@ public class DashX {
 
         this.graphqlClient = createGraphqlClient();
 
-        // Reset cached services so they pick up the new client
-        this.accountService = null;
-        this.assetService = null;
-        this.eventService = null;
-        this.recordService = null;
-        this.issueService = null;
-        this.broadcastService = null;
+        // Initialize all services eagerly (they are lightweight)
+        this.accountService = new AccountService(graphqlClient);
+        this.assetService = new AssetService(graphqlClient);
+        this.eventService = new EventService(graphqlClient);
+        this.recordService = new RecordService(graphqlClient);
+        this.issueService = new IssueService(graphqlClient);
+        this.broadcastService = new BroadcastService(graphqlClient);
     }
 
     private DashXGraphQLClient createGraphqlClient() {
@@ -163,47 +163,6 @@ public class DashX {
         }
     }
 
-    private AccountService getAccountService() {
-        if (accountService == null) {
-            accountService = new AccountService(graphqlClient);
-        }
-        return accountService;
-    }
-
-    private AssetService getAssetService() {
-        if (assetService == null) {
-            assetService = new AssetService(graphqlClient);
-        }
-        return assetService;
-    }
-
-    private EventService getEventService() {
-        if (eventService == null) {
-            eventService = new EventService(graphqlClient);
-        }
-        return eventService;
-    }
-
-    private RecordService getRecordService() {
-        if (recordService == null) {
-            recordService = new RecordService(graphqlClient);
-        }
-        return recordService;
-    }
-
-    private IssueService getIssueService() {
-        if (issueService == null) {
-            issueService = new IssueService(graphqlClient);
-        }
-        return issueService;
-    }
-
-    private BroadcastService getBroadcastService() {
-        if (broadcastService == null) {
-            broadcastService = new BroadcastService(graphqlClient);
-        }
-        return broadcastService;
-    }
 
     private String generateAccountAnonymousUid() {
         return UUID.randomUUID().toString();
@@ -257,7 +216,7 @@ public class DashX {
                         .lastName((String) options.get(Constants.UserAttributes.LAST_NAME)).build();
 
         logger.debug("Identifying account with uid: '{}', anonymousUid: '{}'", uid, anonymousUid);
-        return getAccountService().identifyAccount(input).toFuture()
+        return accountService.identifyAccount(input).toFuture()
                 .thenApply(account -> {
                     this.accountUid = account.getUid();
                     this.accountAnonymousUid = account.getAnonymousUid();
@@ -304,7 +263,7 @@ public class DashX {
                 .accountAnonymousUid(accAnonUid).data(data).build();
 
         logger.debug("Tracking event '{}' for uid: '{}', anonymousUid: '{}'", event, accUid, accAnonUid);
-        return getEventService().trackEvent(input).toFuture();
+        return eventService.trackEvent(input).toFuture();
     }
 
     public CompletableFuture<TrackEventResponse> track(String event, Map<String, Object> data) {
@@ -334,7 +293,7 @@ public class DashX {
         ensureConfigured();
 
         logger.debug("Listing assets with filter: {}, limit: {}, page: {}", filter, limit, page);
-        return getAssetService().listAssets(filter, order, limit, page).toFuture();
+        return assetService.listAssets(filter, order, limit, page).toFuture();
     }
 
     public CompletableFuture<List<Asset>> listAssets(Map<String, Object> filter) {
@@ -368,7 +327,7 @@ public class DashX {
         ensureConfigured();
 
         logger.debug("Getting asset with id: '{}'", id);
-        return getAssetService().getAsset(id).toFuture();
+        return assetService.getAsset(id).toFuture();
     }
 
     /**
@@ -402,7 +361,7 @@ public class DashX {
                 .include(options.getInclude()).exclude(options.getExclude()).build();
 
         logger.debug("Searching records for resource: '{}' with filter: {}", resource, options.getFilter());
-        return getRecordService().searchRecords(input).toFuture();
+        return recordService.searchRecords(input).toFuture();
     }
 
     public CompletableFuture<List<Map<String, Object>>> searchRecords(String resource) {
@@ -427,7 +386,7 @@ public class DashX {
         ensureConfigured();
 
         logger.debug("Creating issue");
-        return getIssueService().createIssue(input).toFuture();
+        return issueService.createIssue(input).toFuture();
     }
 
     /**
@@ -449,7 +408,7 @@ public class DashX {
         ensureConfigured();
 
         logger.debug("Upserting issue");
-        return getIssueService().upsertIssue(input).toFuture();
+        return issueService.upsertIssue(input).toFuture();
     }
 
     /**
@@ -470,6 +429,6 @@ public class DashX {
         ensureConfigured();
 
         logger.debug("Creating broadcast");
-        return getBroadcastService().createBroadcast(input).toFuture();
+        return broadcastService.createBroadcast(input).toFuture();
     }
 }

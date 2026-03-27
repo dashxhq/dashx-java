@@ -142,6 +142,231 @@ dashx.max-connections=500
 dashx.max-idle-time=45000
 ```
 
+## Usage
+
+All SDK methods return `CompletableFuture`, making them non-blocking. Handle results with `thenApply`/`thenAccept` and errors with `exceptionally`.
+
+### Identify User
+
+Creates or updates a user account. Supports `uid`, `anonymousUid`, `email`, `phone`, `name`, `firstName`, and `lastName`.
+
+```java
+Map<String, Object> options = Map.of(
+    "uid", "user-123",
+    "firstName", "Jane",
+    "lastName", "Doe",
+    "email", "jane@example.com"
+);
+
+dashX.identify(options).thenAccept(account -> {
+    System.out.println("Identified: " + account.getUid());
+});
+```
+
+If no `uid` or `anonymousUid` is provided, the SDK generates an anonymous UID automatically.
+
+### Track Events
+
+Tracks an event, optionally associating it with a user and attaching custom data.
+
+```java
+// Basic event
+dashX.track("page_viewed");
+
+// Event with user ID
+dashX.track("page_viewed", "user-123");
+
+// Event with custom data
+dashX.track("button_clicked", Map.of("button", "submit", "page", "/checkout"));
+
+// Event with user ID and custom data
+dashX.track("item_purchased", "user-123", Map.of("item", "SKU-456", "price", 29.99));
+```
+
+### Get Asset
+
+Retrieves a single asset by its ID.
+
+```java
+dashX.getAsset("asset-uuid").thenAccept(asset -> {
+    System.out.println("Asset URL: " + asset.getUrl());
+    System.out.println("MIME type: " + asset.getMimeType());
+});
+```
+
+### List Assets
+
+Lists assets with optional filtering, ordering, and pagination.
+
+```java
+// List all assets
+dashX.listAssets();
+
+// Filter by resource ID
+dashX.listAssets(Map.of("resourceId", Map.of("eq", "resource-uuid")));
+
+// Filter with ordering
+dashX.listAssets(
+    Map.of("resourceId", Map.of("eq", "resource-uuid")),
+    List.of(Map.of("createdAt", "desc"))
+);
+
+// Filter with ordering and pagination
+dashX.listAssets(
+    Map.of("resourceId", Map.of("eq", "resource-uuid")),
+    List.of(Map.of("createdAt", "desc")),
+    10,  // limit
+    1    // page
+);
+```
+
+### Search Records
+
+Searches content records for a given resource. Use `SearchRecordsOptions` to configure filtering, ordering, pagination, and field selection.
+
+```java
+// Basic search
+dashX.searchRecords("posts");
+
+// Search with options
+SearchRecordsOptions options = SearchRecordsOptions.newBuilder()
+    .filter(Map.of("status", "published"))
+    .order(List.of(Map.of("createdAt", "desc")))
+    .limit(20)
+    .page(1)
+    .language("en")
+    .preview(false)
+    .build();
+
+dashX.searchRecords("posts", options);
+```
+
+### Create Issue
+
+Creates a new issue in your workspace.
+
+```java
+CreateIssueInput input = CreateIssueInput.newBuilder()
+    .title("Login button broken on mobile")
+    .issueType("Bug")
+    .issueStatus("Open")
+    .group("Engineering")
+    .priority(IssuePriority.HIGH)
+    .description("The login button is unresponsive on iOS Safari.")
+    .labels(List.of("mobile", "auth"))
+    .properties(Map.of("browser", "Safari", "os", "iOS 17"))
+    .requestedBy(Map.of("uid", "user-123", "name", "Jane Doe"))
+    .build();
+
+dashX.createIssue(input).thenAccept(issue -> {
+    System.out.println("Created issue #" + issue.getNumber());
+});
+```
+
+### Upsert Issue
+
+Creates a new issue or updates an existing one. Use `idempotencyKey` to match an existing issue for updates.
+
+```java
+UpsertIssueInput input = UpsertIssueInput.newBuilder()
+    .title("Update billing page copy")
+    .issueType("Task")
+    .issueStatus("In Progress")
+    .group("Design")
+    .priority(IssuePriority.MEDIUM)
+    .idempotencyKey("billing-copy-update-v2")
+    .properties(Map.of("sprint", "2024-Q1"))
+    .labels(List.of("copy", "billing"))
+    .build();
+
+dashX.upsertIssue(input);
+```
+
+### Send Broadcast
+
+Sends a broadcast message (push notification, email, SMS, etc.) to recipients.
+
+```java
+// Using a template
+CreateBroadcastInput input = CreateBroadcastInput.newBuilder()
+    .templateSubkind(TemplateSubkind.PUSH)
+    .templateIdentifier("welcome-push")
+    .content(Map.of("to", List.of("user-123", "user-456")))
+    .data(Map.of("promo_code", "WELCOME10"))
+    .build();
+
+dashX.sendBroadcast(input);
+
+// Using inline content
+CreateBroadcastInput input = CreateBroadcastInput.newBuilder()
+    .templateSubkind(TemplateSubkind.PUSH)
+    .content(Map.of(
+        "to", List.of("user-123"),
+        "title", "Order shipped!",
+        "body", "Your order #1234 is on its way."
+    ))
+    .build();
+
+dashX.sendBroadcast(input);
+```
+
+Supported `TemplateSubkind` values: `EMAIL`, `SMS`, `PUSH`, `WHATSAPP`, `IN_APP`, `SCREEN`, `OVERLAY`.
+
+### Named Instances
+
+Use named instances when you need multiple DashX clients with different configurations (e.g., multi-tenant setups).
+
+```java
+DashX analytics = DashX.getInstance("analytics");
+analytics.configure(analyticsConfig);
+
+DashX notifications = DashX.getInstance("notifications");
+notifications.configure(notificationsConfig);
+
+// Use them independently
+analytics.track("page_viewed");
+notifications.sendBroadcast(input);
+
+// Clean up a specific instance
+DashX.removeInstance("analytics");
+
+// Or clean up all instances
+DashX.resetInstances();
+```
+
+### Error Handling
+
+The SDK throws three types of exceptions, all extending `DashXException` (a `RuntimeException`):
+
+- **`DashXConfigurationException`** — Missing or invalid configuration (e.g., null `publicKey`, negative timeout)
+- **`DashXValidationException`** — Invalid method arguments (e.g., null options, empty event name)
+- **`DashXGraphQLException`** — Errors returned by the DashX API; call `getErrors()` to inspect individual GraphQL errors
+
+```java
+dashX.track("event", "user-123").exceptionally(ex -> {
+    Throwable cause = ex.getCause();
+    if (cause instanceof DashXGraphQLException graphQLEx) {
+        System.err.println("GraphQL errors: " + graphQLEx.getErrors());
+    } else if (cause instanceof DashXValidationException) {
+        System.err.println("Invalid input: " + cause.getMessage());
+    }
+    return null;
+});
+```
+
+### Resource Cleanup
+
+Call `close()` to release the underlying connection pool when the SDK is no longer needed. In Spring Boot, this is handled automatically.
+
+```java
+DashX dashX = DashX.getInstance();
+dashX.configure(config);
+
+// ... use the client ...
+
+dashX.close();
+```
+
 ## Troubleshooting
 
 ### Connection Timeout Errors

@@ -14,6 +14,7 @@ type Mutation {
     trackEvent(input: TrackEventInput!): TrackEventResponse!
     createIssue(input: CreateIssueInput!): Issue!
     upsertIssue(input: UpsertIssueInput!): Issue!
+    createBroadcast(input: CreateBroadcastInput!): Broadcast!
 }
 
 type Account {

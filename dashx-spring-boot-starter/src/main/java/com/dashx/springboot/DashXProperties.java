@@ -25,36 +25,24 @@ public class DashXProperties {
     /** Max idle time for connections in milliseconds (default: 20000) */
     private Integer maxIdleTime = 20000;
 
-    public String getBaseUrl() {
-        if (baseUrl != null && baseUrl.isEmpty()) {
-            return null;
-        }
+    private static String nullIfEmpty(String s) {
+        return (s != null && s.isEmpty()) ? null : s;
+    }
 
-        return baseUrl;
+    public String getBaseUrl() {
+        return nullIfEmpty(baseUrl);
     }
 
     public String getPublicKey() {
-        if (publicKey != null && publicKey.isEmpty()) {
-            return null;
-        }
-
-        return publicKey;
+        return nullIfEmpty(publicKey);
     }
 
     public String getPrivateKey() {
-        if (privateKey != null && privateKey.isEmpty()) {
-            return null;
-        }
-
-        return privateKey;
+        return nullIfEmpty(privateKey);
     }
 
     public String getTargetEnvironment() {
-        if (targetEnvironment != null && targetEnvironment.isEmpty()) {
-            return null;
-        }
-
-        return targetEnvironment;
+        return nullIfEmpty(targetEnvironment);
     }
 
     public Integer getConnectionTimeout() {
