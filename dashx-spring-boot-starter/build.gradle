@@ -1,9 +1,6 @@
-import com.vanniktech.maven.publish.SonatypeHost
-
 plugins {
     id 'java-library'
-    id 'com.vanniktech.maven.publish' version '0.31.0'
-    id 'signing'
+    id 'com.vanniktech.maven.publish' version '0.36.0'
 }
 
 def version = libs.versions.dashx.get()
@@ -34,7 +31,9 @@ tasks.named('test') {
 mavenPublishing {
     coordinates(group, artifactId, version)
 
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL,true)
+    publishToMavenCentral(true)
+
+    signAllPublications()
 
     pom {
         name = 'DashX Spring Boot Starter'
@@ -61,9 +60,4 @@ mavenPublishing {
             url = 'https://github.com/dashxhq/dashx-java'
         }
     }
-}
-
-signing {
-    useGpgCmd()
-    sign publishing.publications
 }
