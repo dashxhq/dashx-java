@@ -1,10 +1,7 @@
-import com.vanniktech.maven.publish.SonatypeHost
-
 plugins {
     id 'java-library'
     id 'com.netflix.dgs.codegen' version '8.0.2'
-    id 'com.vanniktech.maven.publish' version '0.31.0'
-    id 'signing'
+    id 'com.vanniktech.maven.publish' version '0.36.0'
 }
 
 def version = libs.versions.dashx.get()
@@ -56,7 +53,9 @@ generateJava {
 mavenPublishing {
     coordinates(group, artifactId, version)
 
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
+    publishToMavenCentral(true)
+
+    signAllPublications()
 
     pom {
         name = 'DashX Java SDK'
@@ -83,9 +82,4 @@ mavenPublishing {
             url = 'https://github.com/dashxhq/dashx-java'
         }
     }
-}
-
-signing {
-    useGpgCmd()
-    sign publishing.publications
 }
