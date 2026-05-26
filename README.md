@@ -5,7 +5,6 @@
     <br />
     <strong>Your All-in-One Product Stack</strong>
 </p>
-
 <div align="center">
   <h4>
     <a href="https://dashx.com">Website</a>
