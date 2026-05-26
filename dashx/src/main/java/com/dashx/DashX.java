@@ -12,6 +12,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.dashx.graphql.generated.types.Account;
+import com.dashx.graphql.generated.types.AggregateResponse;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.graphql.generated.types.Issue;
 import com.dashx.graphql.generated.types.Broadcast;
@@ -409,6 +410,68 @@ public class DashX {
 
         logger.debug("Upserting issue");
         return issueService.upsertIssue(input).toFuture();
+    }
+
+    /**
+     * Lists issues with optional filtering, ordering, and pagination.
+     *
+     * @param filter Optional filter criteria
+     * @param order Optional ordering criteria
+     * @param limit Optional maximum number of results
+     * @param page Optional page number for pagination
+     * @param targetEnvironment Optional target environment identifier to scope the query
+     * @return A CompletableFuture that will be completed with the list of issues or completed
+     *         exceptionally if there are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter,
+            List<Map<String, Object>> order, Integer limit, Integer page, String targetEnvironment) {
+        ensureConfigured();
+
+        logger.debug("Listing issues with filter: {}, limit: {}, page: {}", filter, limit, page);
+        return issueService.listIssues(filter, order, limit, page, targetEnvironment).toFuture();
+    }
+
+    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter,
+            List<Map<String, Object>> order, Integer limit, Integer page) {
+        return listIssues(filter, order, limit, page, null);
+    }
+
+    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter,
+            List<Map<String, Object>> order) {
+        return listIssues(filter, order, null, null, null);
+    }
+
+    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter) {
+        return listIssues(filter, null, null, null, null);
+    }
+
+    public CompletableFuture<List<Issue>> listIssues() {
+        return listIssues(null, null, null, null, null);
+    }
+
+    /**
+     * Counts issues matching the provided filter.
+     *
+     * @param filter Optional filter criteria
+     * @param targetEnvironment Optional target environment identifier to scope the query
+     * @return A CompletableFuture that will be completed with the aggregate response containing
+     *         the count of matching issues, or completed exceptionally if there are GraphQL errors
+     *         or execution errors.
+     */
+    public CompletableFuture<AggregateResponse> aggregateIssues(Map<String, Object> filter,
+            String targetEnvironment) {
+        ensureConfigured();
+
+        logger.debug("Aggregating issues with filter: {}", filter);
+        return issueService.aggregateIssues(filter, targetEnvironment).toFuture();
+    }
+
+    public CompletableFuture<AggregateResponse> aggregateIssues(Map<String, Object> filter) {
+        return aggregateIssues(filter, null);
+    }
+
+    public CompletableFuture<AggregateResponse> aggregateIssues() {
+        return aggregateIssues(null, null);
     }
 
     /**
