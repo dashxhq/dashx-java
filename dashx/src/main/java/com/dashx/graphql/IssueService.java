@@ -1,9 +1,12 @@
 package com.dashx.graphql;
 
 import com.dashx.DashXGraphQLClient;
+import com.dashx.graphql.generated.types.AggregateResponse;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.Issue;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +33,7 @@ public class IssueService {
                     issueStatusId
                     createdById
                     environmentId
+                    requestedById
                     spaceId
                     parentId
                     assigneeId
@@ -82,5 +86,54 @@ public class IssueService {
 
         return client.execute(query, variables)
                 .map(response -> response.extractValueAsObject("upsertIssue", Issue.class));
+    }
+
+    /**
+     * Lists issues with optional filtering, ordering, and pagination.
+     *
+     * @param filter optional filter criteria to narrow down results
+     * @param order optional ordering criteria to sort the results
+     * @param limit optional maximum number of results to return per page
+     * @param page optional page number for pagination
+     * @param targetEnvironment optional target environment identifier to scope the query
+     * @return a Mono that emits a list of Issue objects matching the criteria
+     */
+    public Mono<List<Issue>> listIssues(Map<String, Object> filter,
+            List<Map<String, Object>> order, Integer limit, Integer page, String targetEnvironment) {
+        String query =
+                "query ListIssues($filter: JSON, $order: [JSON!], $limit: Int, $page: Int, $targetEnvironment: String) { issuesList(filter: $filter, order: $order, limit: $limit, page: $page, targetEnvironment: $targetEnvironment) "
+                        + this.fullIssueProjection + " }";
+
+        Map<String, Object> variables = new HashMap<>();
+        if (filter != null) variables.put("filter", filter);
+        if (order != null) variables.put("order", order);
+        if (limit != null) variables.put("limit", limit);
+        if (page != null) variables.put("page", page);
+        if (targetEnvironment != null) variables.put("targetEnvironment", targetEnvironment);
+
+        return client.execute(query, variables).map(response -> {
+            Issue[] issuesArray = response.extractValueAsObject("issuesList", Issue[].class);
+            return issuesArray != null ? List.of(issuesArray) : List.of();
+        });
+    }
+
+    /**
+     * Counts issues matching the provided filter.
+     *
+     * @param filter optional filter criteria to narrow down the count
+     * @param targetEnvironment optional target environment identifier to scope the query
+     * @return a Mono that emits an AggregateResponse containing the count of matching issues
+     */
+    public Mono<AggregateResponse> aggregateIssues(Map<String, Object> filter,
+            String targetEnvironment) {
+        String query =
+                "query AggregateIssues($filter: JSON, $targetEnvironment: String) { issuesAggregate(filter: $filter, targetEnvironment: $targetEnvironment) { count } }";
+
+        Map<String, Object> variables = new HashMap<>();
+        if (filter != null) variables.put("filter", filter);
+        if (targetEnvironment != null) variables.put("targetEnvironment", targetEnvironment);
+
+        return client.execute(query, variables).map(response -> response
+                .extractValueAsObject("issuesAggregate", AggregateResponse.class));
     }
 }
