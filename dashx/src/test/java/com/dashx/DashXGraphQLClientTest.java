@@ -1,9 +1,17 @@
 package com.dashx;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 import com.dashx.exception.DashXGraphQLException;
 import com.netflix.graphql.dgs.client.GraphQLError;
 import com.netflix.graphql.dgs.client.GraphQLResponse;
 import com.netflix.graphql.dgs.client.WebClientGraphQLClient;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -12,15 +20,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DashXGraphQLClientTest {
@@ -41,12 +40,16 @@ class DashXGraphQLClientTest {
         headers.add("X-Public-Key", "test-key");
 
         DashXConfig config = new DashXConfig.Builder()
-                .publicKey("test-public-key")
-                .privateKey("test-private-key")
-                .targetEnvironment("test")
-                .build();
+            .publicKey("test-public-key")
+            .privateKey("test-private-key")
+            .targetEnvironment("test")
+            .build();
 
-        DashXGraphQLClient client = new DashXGraphQLClient(url, headers, config);
+        DashXGraphQLClient client = new DashXGraphQLClient(
+            url,
+            headers,
+            config
+        );
 
         assertNotNull(client);
     }
@@ -68,16 +71,20 @@ class DashXGraphQLClientTest {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 
         DashXConfig config = new DashXConfig.Builder()
-                .publicKey("test-public-key")
-                .privateKey("test-private-key")
-                .targetEnvironment("test")
-                .connectionTimeout(15000)
-                .responseTimeout(45000)
-                .maxConnections(1000)
-                .maxIdleTime(30000)
-                .build();
+            .publicKey("test-public-key")
+            .privateKey("test-private-key")
+            .targetEnvironment("test")
+            .connectionTimeout(15000)
+            .responseTimeout(45000)
+            .maxConnections(1000)
+            .maxIdleTime(30000)
+            .build();
 
-        DashXGraphQLClient client = new DashXGraphQLClient(url, headers, config);
+        DashXGraphQLClient client = new DashXGraphQLClient(
+            url,
+            headers,
+            config
+        );
 
         assertNotNull(client);
     }
@@ -97,12 +104,16 @@ class DashXGraphQLClientTest {
 
         // Create with minimal config to test defaults
         DashXConfig config = new DashXConfig.Builder()
-                .publicKey("key")
-                .privateKey("secret")
-                .targetEnvironment("test")
-                .build();
+            .publicKey("key")
+            .privateKey("secret")
+            .targetEnvironment("test")
+            .build();
 
-        DashXGraphQLClient client = new DashXGraphQLClient(url, headers, config);
+        DashXGraphQLClient client = new DashXGraphQLClient(
+            url,
+            headers,
+            config
+        );
 
         // Verify client was created successfully
         assertNotNull(client);

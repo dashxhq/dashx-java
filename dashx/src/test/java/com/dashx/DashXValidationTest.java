@@ -1,17 +1,16 @@
 package com.dashx;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.dashx.exception.DashXConfigurationException;
 import com.dashx.exception.DashXValidationException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class DashXValidationTest {
 
@@ -24,10 +23,10 @@ class DashXValidationTest {
 
         // Configure with valid settings
         DashXConfig config = new DashXConfig.Builder()
-                .publicKey("test-public-key")
-                .privateKey("test-private-key")
-                .targetEnvironment("test")
-                .build();
+            .publicKey("test-public-key")
+            .privateKey("test-private-key")
+            .targetEnvironment("test")
+            .build();
 
         dashx.configure(config);
     }
@@ -62,45 +61,72 @@ class DashXValidationTest {
     void testIdentifyWithNullOptionsThrowsException() {
         CompletableFuture<?> future = dashx.identify(null);
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
-        assertTrue(exception.getCause().getMessage().contains("cannot be called with null"));
+        assertTrue(
+            exception
+                .getCause()
+                .getMessage()
+                .contains("cannot be called with null")
+        );
     }
 
     @Test
     void testTrackWithNullEventThrowsException() {
         CompletableFuture<?> future = dashx.track(null, "user123");
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
-        assertTrue(exception.getCause().getMessage().contains("Event name cannot be null"));
+        assertTrue(
+            exception
+                .getCause()
+                .getMessage()
+                .contains("Event name cannot be null")
+        );
     }
 
     @Test
     void testTrackWithEmptyEventThrowsException() {
         CompletableFuture<?> future = dashx.track("", "user123");
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
-        assertTrue(exception.getCause().getMessage().contains("Event name cannot be null or empty"));
+        assertTrue(
+            exception
+                .getCause()
+                .getMessage()
+                .contains("Event name cannot be null or empty")
+        );
     }
 
     @Test
     void testTrackWithWhitespaceEventThrowsException() {
         CompletableFuture<?> future = dashx.track("   ", "user123");
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
     }
@@ -109,21 +135,32 @@ class DashXValidationTest {
     void testGetAssetWithNullIdThrowsException() {
         CompletableFuture<?> future = dashx.getAsset(null);
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
-        assertTrue(exception.getCause().getMessage().contains("Asset ID cannot be null"));
+        assertTrue(
+            exception
+                .getCause()
+                .getMessage()
+                .contains("Asset ID cannot be null")
+        );
     }
 
     @Test
     void testGetAssetWithEmptyIdThrowsException() {
         CompletableFuture<?> future = dashx.getAsset("");
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
     }
@@ -132,21 +169,32 @@ class DashXValidationTest {
     void testSearchRecordsWithNullResourceThrowsException() {
         CompletableFuture<?> future = dashx.searchRecords(null);
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
-        assertTrue(exception.getCause().getMessage().contains("Resource cannot be null"));
+        assertTrue(
+            exception
+                .getCause()
+                .getMessage()
+                .contains("Resource cannot be null")
+        );
     }
 
     @Test
     void testSearchRecordsWithEmptyResourceThrowsException() {
         CompletableFuture<?> future = dashx.searchRecords("");
 
-        ExecutionException exception = assertThrows(ExecutionException.class, () -> {
-            future.get();
-        });
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
 
         assertTrue(exception.getCause() instanceof DashXValidationException);
     }

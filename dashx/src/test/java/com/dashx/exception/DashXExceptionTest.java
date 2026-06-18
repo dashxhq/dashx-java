@@ -1,13 +1,13 @@
 package com.dashx.exception;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.netflix.graphql.dgs.client.GraphQLError;
-import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
 
 class DashXExceptionTest {
 
@@ -41,7 +41,9 @@ class DashXExceptionTest {
     @Test
     void testDashXValidationException() {
         String message = "Validation failed";
-        DashXValidationException exception = new DashXValidationException(message);
+        DashXValidationException exception = new DashXValidationException(
+            message
+        );
 
         assertEquals(message, exception.getMessage());
         assertTrue(exception instanceof DashXException);
@@ -50,7 +52,9 @@ class DashXExceptionTest {
     @Test
     void testDashXConfigurationException() {
         String message = "Configuration error";
-        DashXConfigurationException exception = new DashXConfigurationException(message);
+        DashXConfigurationException exception = new DashXConfigurationException(
+            message
+        );
 
         assertEquals(message, exception.getMessage());
         assertTrue(exception instanceof DashXException);
@@ -100,7 +104,10 @@ class DashXExceptionTest {
         List<GraphQLError> errors = Collections.singletonList(error);
         String customMessage = "Custom error message";
 
-        DashXGraphQLException exception = new DashXGraphQLException(customMessage, errors);
+        DashXGraphQLException exception = new DashXGraphQLException(
+            customMessage,
+            errors
+        );
 
         assertEquals(customMessage, exception.getMessage());
         assertEquals(errors, exception.getErrors());

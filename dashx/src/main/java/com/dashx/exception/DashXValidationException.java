@@ -5,6 +5,7 @@ package com.dashx.exception;
  * This includes null checks, empty string validation, and other input parameter validation.
  */
 public class DashXValidationException extends DashXException {
+
     /**
      * Constructs a new validation exception with the specified detail message.
      *
