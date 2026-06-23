@@ -3,6 +3,7 @@ package com.dashx;
 import com.dashx.exception.DashXConfigurationException;
 
 public final class DashXConfig {
+
     private final String baseUrl;
     private final String publicKey;
     private final String privateKey;
@@ -56,6 +57,7 @@ public final class DashXConfig {
     }
 
     public static class Builder {
+
         private String baseUrl = Constants.DEFAULT_BASE_URL;
         private String publicKey;
         private String privateKey;
@@ -121,26 +123,41 @@ public final class DashXConfig {
 
         public DashXConfig build() {
             if (publicKey == null) {
-                throw new DashXConfigurationException("publicKey must not be null");
+                throw new DashXConfigurationException(
+                    "publicKey must not be null"
+                );
             }
             if (privateKey == null) {
-                throw new DashXConfigurationException("privateKey must not be null");
+                throw new DashXConfigurationException(
+                    "privateKey must not be null"
+                );
             }
             if (targetEnvironment == null) {
-                throw new DashXConfigurationException("targetEnvironment must not be null");
+                throw new DashXConfigurationException(
+                    "targetEnvironment must not be null"
+                );
             }
 
             if (connectionTimeout != null && connectionTimeout <= 0) {
-                throw new DashXConfigurationException("connectionTimeout must be positive, got: " + connectionTimeout);
+                throw new DashXConfigurationException(
+                    "connectionTimeout must be positive, got: " +
+                        connectionTimeout
+                );
             }
             if (responseTimeout != null && responseTimeout <= 0) {
-                throw new DashXConfigurationException("responseTimeout must be positive, got: " + responseTimeout);
+                throw new DashXConfigurationException(
+                    "responseTimeout must be positive, got: " + responseTimeout
+                );
             }
             if (maxConnections != null && maxConnections <= 0) {
-                throw new DashXConfigurationException("maxConnections must be positive, got: " + maxConnections);
+                throw new DashXConfigurationException(
+                    "maxConnections must be positive, got: " + maxConnections
+                );
             }
             if (maxIdleTime != null && maxIdleTime <= 0) {
-                throw new DashXConfigurationException("maxIdleTime must be positive, got: " + maxIdleTime);
+                throw new DashXConfigurationException(
+                    "maxIdleTime must be positive, got: " + maxIdleTime
+                );
             }
 
             return new DashXConfig(this);

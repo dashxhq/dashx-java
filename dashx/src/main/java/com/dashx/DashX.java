@@ -1,42 +1,46 @@
 package com.dashx;
 
+import com.dashx.exception.DashXConfigurationException;
+import com.dashx.exception.DashXValidationException;
+import com.dashx.graphql.AccountService;
+import com.dashx.graphql.AssetService;
+import com.dashx.graphql.BroadcastService;
+import com.dashx.graphql.EventService;
+import com.dashx.graphql.IssueService;
+import com.dashx.graphql.RecordService;
+import com.dashx.graphql.generated.types.Account;
+import com.dashx.graphql.generated.types.AggregateResponse;
+import com.dashx.graphql.generated.types.Asset;
+import com.dashx.graphql.generated.types.Broadcast;
+import com.dashx.graphql.generated.types.CreateBroadcastInput;
+import com.dashx.graphql.generated.types.CreateIssueInput;
+import com.dashx.graphql.generated.types.IdentifyAccountInput;
+import com.dashx.graphql.generated.types.Issue;
+import com.dashx.graphql.generated.types.SearchRecordsInput;
+import com.dashx.graphql.generated.types.TrackEventInput;
+import com.dashx.graphql.generated.types.TrackEventResponse;
+import com.dashx.graphql.generated.types.UpsertIssueInput;
+import com.dashx.graphql.utils.SearchRecordsOptions;
+import io.jsonwebtoken.Jwts;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.dashx.graphql.generated.types.Account;
-import com.dashx.graphql.generated.types.AggregateResponse;
-import com.dashx.graphql.generated.types.Asset;
-import com.dashx.graphql.generated.types.Issue;
-import com.dashx.graphql.generated.types.Broadcast;
-import com.dashx.graphql.generated.types.CreateIssueInput;
-import com.dashx.graphql.generated.types.UpsertIssueInput;
-import com.dashx.graphql.generated.types.IdentifyAccountInput;
-import com.dashx.graphql.generated.types.SearchRecordsInput;
-import com.dashx.graphql.generated.types.TrackEventInput;
-import com.dashx.graphql.generated.types.TrackEventResponse;
-import com.dashx.graphql.generated.types.CreateBroadcastInput;
-
-import com.dashx.graphql.AccountService;
-import com.dashx.graphql.AssetService;
-import com.dashx.graphql.EventService;
-import com.dashx.graphql.RecordService;
-import com.dashx.graphql.IssueService;
-import com.dashx.graphql.BroadcastService;
-import com.dashx.graphql.utils.SearchRecordsOptions;
-import com.dashx.exception.DashXConfigurationException;
-import com.dashx.exception.DashXValidationException;
-
 public class DashX {
+
     private static final Logger logger = LoggerFactory.getLogger(DashX.class);
-    private static final ConcurrentHashMap<String, DashX> instances = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, DashX> instances =
+        new ConcurrentHashMap<>();
 
     private final String instanceName;
 
@@ -136,7 +140,11 @@ public class DashX {
             }
 
             String url = baseUrl != null ? baseUrl : Constants.DEFAULT_BASE_URL;
-            return new DashXGraphQLClient(new URI(url).toURL(), headers, config);
+            return new DashXGraphQLClient(
+                new URI(url).toURL(),
+                headers,
+                config
+            );
         } catch (URISyntaxException | MalformedURLException e) {
             throw new DashXConfigurationException("Invalid URL", e);
         }
@@ -150,7 +158,8 @@ public class DashX {
     private void ensureConfigured() {
         if (graphqlClient == null) {
             throw new DashXConfigurationException(
-                    "DashX client is not configured. Call configure() before using the client.");
+                "DashX client is not configured. Call configure() before using the client."
+            );
         }
     }
 
@@ -163,7 +172,6 @@ public class DashX {
             graphqlClient = null;
         }
     }
-
 
     private String generateAccountAnonymousUid() {
         return UUID.randomUUID().toString();
@@ -184,8 +192,11 @@ public class DashX {
         if (options == null) {
             CompletableFuture<Account> future = new CompletableFuture<>();
 
-            future.completeExceptionally(new DashXValidationException(
-                    "'identify' cannot be called with null, please pass options of type 'object'."));
+            future.completeExceptionally(
+                new DashXValidationException(
+                    "'identify' cannot be called with null, please pass options of type 'object'."
+                )
+            );
 
             return future;
         }
@@ -193,13 +204,15 @@ public class DashX {
         ensureConfigured();
 
         String uid = options.containsKey(Constants.UserAttributes.UID)
-                ? (String) options.get(Constants.UserAttributes.UID)
-                : this.accountUid;
+            ? (String) options.get(Constants.UserAttributes.UID)
+            : this.accountUid;
 
         String anonymousUid;
 
         if (options.containsKey(Constants.UserAttributes.ANONYMOUS_UID)) {
-            anonymousUid = (String) options.get(Constants.UserAttributes.ANONYMOUS_UID);
+            anonymousUid = (String) options.get(
+                Constants.UserAttributes.ANONYMOUS_UID
+            );
         } else if (this.accountAnonymousUid != null) {
             anonymousUid = this.accountAnonymousUid;
         } else if (uid == null) {
@@ -208,21 +221,31 @@ public class DashX {
             anonymousUid = null;
         }
 
-        IdentifyAccountInput input =
-                IdentifyAccountInput.newBuilder().uid(uid).anonymousUid(anonymousUid)
-                        .email((String) options.get(Constants.UserAttributes.EMAIL))
-                        .phone((String) options.get(Constants.UserAttributes.PHONE))
-                        .name((String) options.get(Constants.UserAttributes.NAME))
-                        .firstName((String) options.get(Constants.UserAttributes.FIRST_NAME))
-                        .lastName((String) options.get(Constants.UserAttributes.LAST_NAME)).build();
+        IdentifyAccountInput input = IdentifyAccountInput.newBuilder()
+            .uid(uid)
+            .anonymousUid(anonymousUid)
+            .email((String) options.get(Constants.UserAttributes.EMAIL))
+            .phone((String) options.get(Constants.UserAttributes.PHONE))
+            .name((String) options.get(Constants.UserAttributes.NAME))
+            .firstName(
+                (String) options.get(Constants.UserAttributes.FIRST_NAME)
+            )
+            .lastName((String) options.get(Constants.UserAttributes.LAST_NAME))
+            .build();
 
-        logger.debug("Identifying account with uid: '{}', anonymousUid: '{}'", uid, anonymousUid);
-        return accountService.identifyAccount(input).toFuture()
-                .thenApply(account -> {
-                    this.accountUid = account.getUid();
-                    this.accountAnonymousUid = account.getAnonymousUid();
-                    return account;
-                });
+        logger.debug(
+            "Identifying account with uid: '{}', anonymousUid: '{}'",
+            uid,
+            anonymousUid
+        );
+        return accountService
+            .identifyAccount(input)
+            .toFuture()
+            .thenApply(account -> {
+                this.accountUid = account.getUid();
+                this.accountAnonymousUid = account.getAnonymousUid();
+                return account;
+            });
     }
 
     /**
@@ -234,12 +257,19 @@ public class DashX {
      * @return A CompletableFuture that will be completed with the tracking result or completed
      *         exceptionally if there are GraphQL errors or execution errors.
      */
-    public CompletableFuture<TrackEventResponse> track(String event, String uid,
-            Map<String, Object> data) {
+    public CompletableFuture<TrackEventResponse> track(
+        String event,
+        String uid,
+        Map<String, Object> data
+    ) {
         if (event == null || event.trim().isEmpty()) {
-            CompletableFuture<TrackEventResponse> future = new CompletableFuture<>();
-            future.completeExceptionally(new DashXValidationException(
-                    "Event name cannot be null or empty"));
+            CompletableFuture<TrackEventResponse> future =
+                new CompletableFuture<>();
+            future.completeExceptionally(
+                new DashXValidationException(
+                    "Event name cannot be null or empty"
+                )
+            );
             return future;
         }
 
@@ -260,18 +290,33 @@ public class DashX {
             accAnonUid = null;
         }
 
-        TrackEventInput input = TrackEventInput.newBuilder().event(event).accountUid(accUid)
-                .accountAnonymousUid(accAnonUid).data(data).build();
+        TrackEventInput input = TrackEventInput.newBuilder()
+            .event(event)
+            .accountUid(accUid)
+            .accountAnonymousUid(accAnonUid)
+            .data(data)
+            .build();
 
-        logger.debug("Tracking event '{}' for uid: '{}', anonymousUid: '{}'", event, accUid, accAnonUid);
+        logger.debug(
+            "Tracking event '{}' for uid: '{}', anonymousUid: '{}'",
+            event,
+            accUid,
+            accAnonUid
+        );
         return eventService.trackEvent(input).toFuture();
     }
 
-    public CompletableFuture<TrackEventResponse> track(String event, Map<String, Object> data) {
+    public CompletableFuture<TrackEventResponse> track(
+        String event,
+        Map<String, Object> data
+    ) {
         return track(event, null, data);
     }
 
-    public CompletableFuture<TrackEventResponse> track(String event, String uid) {
+    public CompletableFuture<TrackEventResponse> track(
+        String event,
+        String uid
+    ) {
         return track(event, uid, null);
     }
 
@@ -289,20 +334,33 @@ public class DashX {
      * @return A CompletableFuture that will be completed with the list of assets or completed
      * exceptionally if there are GraphQL errors or execution errors.
      */
-    public CompletableFuture<List<Asset>> listAssets(Map<String, Object> filter,
-            List<Map<String, Object>> order, Integer limit, Integer page) {
+    public CompletableFuture<List<Asset>> listAssets(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order,
+        Integer limit,
+        Integer page
+    ) {
         ensureConfigured();
 
-        logger.debug("Listing assets with filter: {}, limit: {}, page: {}", filter, limit, page);
+        logger.debug(
+            "Listing assets with filter: {}, limit: {}, page: {}",
+            filter,
+            limit,
+            page
+        );
         return assetService.listAssets(filter, order, limit, page).toFuture();
     }
 
-    public CompletableFuture<List<Asset>> listAssets(Map<String, Object> filter) {
+    public CompletableFuture<List<Asset>> listAssets(
+        Map<String, Object> filter
+    ) {
         return listAssets(filter, null, null, null);
     }
 
-    public CompletableFuture<List<Asset>> listAssets(Map<String, Object> filter,
-            List<Map<String, Object>> order) {
+    public CompletableFuture<List<Asset>> listAssets(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order
+    ) {
         return listAssets(filter, order, null, null);
     }
 
@@ -320,8 +378,9 @@ public class DashX {
     public CompletableFuture<Asset> getAsset(String id) {
         if (id == null || id.trim().isEmpty()) {
             CompletableFuture<Asset> future = new CompletableFuture<>();
-            future.completeExceptionally(new DashXValidationException(
-                    "Asset ID cannot be null or empty"));
+            future.completeExceptionally(
+                new DashXValidationException("Asset ID cannot be null or empty")
+            );
             return future;
         }
 
@@ -339,12 +398,16 @@ public class DashX {
      * @return A CompletableFuture that will be completed with the search results or completed
      *         exceptionally if there are GraphQL errors or execution errors.
      */
-    public CompletableFuture<List<Map<String, Object>>> searchRecords(String resource,
-            SearchRecordsOptions options) {
+    public CompletableFuture<List<Map<String, Object>>> searchRecords(
+        String resource,
+        SearchRecordsOptions options
+    ) {
         if (resource == null || resource.trim().isEmpty()) {
-            CompletableFuture<List<Map<String, Object>>> future = new CompletableFuture<>();
-            future.completeExceptionally(new DashXValidationException(
-                    "Resource cannot be null or empty"));
+            CompletableFuture<List<Map<String, Object>>> future =
+                new CompletableFuture<>();
+            future.completeExceptionally(
+                new DashXValidationException("Resource cannot be null or empty")
+            );
             return future;
         }
 
@@ -355,17 +418,30 @@ public class DashX {
             options = SearchRecordsOptions.newBuilder().build();
         }
 
-        SearchRecordsInput input = SearchRecordsInput.newBuilder().resource(resource)
-                .filter(options.getFilter()).order(options.getOrder()).limit(options.getLimit())
-                .page(options.getPage()).preview(options.getPreview())
-                .language(options.getLanguage()).fields(options.getFields())
-                .include(options.getInclude()).exclude(options.getExclude()).build();
+        SearchRecordsInput input = SearchRecordsInput.newBuilder()
+            .resource(resource)
+            .filter(options.getFilter())
+            .order(options.getOrder())
+            .limit(options.getLimit())
+            .page(options.getPage())
+            .preview(options.getPreview())
+            .language(options.getLanguage())
+            .fields(options.getFields())
+            .include(options.getInclude())
+            .exclude(options.getExclude())
+            .build();
 
-        logger.debug("Searching records for resource: '{}' with filter: {}", resource, options.getFilter());
+        logger.debug(
+            "Searching records for resource: '{}' with filter: {}",
+            resource,
+            options.getFilter()
+        );
         return recordService.searchRecords(input).toFuture();
     }
 
-    public CompletableFuture<List<Map<String, Object>>> searchRecords(String resource) {
+    public CompletableFuture<List<Map<String, Object>>> searchRecords(
+        String resource
+    ) {
         return searchRecords(resource, null);
     }
 
@@ -379,8 +455,9 @@ public class DashX {
     public CompletableFuture<Issue> createIssue(CreateIssueInput input) {
         if (input == null) {
             CompletableFuture<Issue> future = new CompletableFuture<>();
-            future.completeExceptionally(new DashXValidationException(
-                    "CreateIssueInput cannot be null"));
+            future.completeExceptionally(
+                new DashXValidationException("CreateIssueInput cannot be null")
+            );
             return future;
         }
 
@@ -401,8 +478,9 @@ public class DashX {
     public CompletableFuture<Issue> upsertIssue(UpsertIssueInput input) {
         if (input == null) {
             CompletableFuture<Issue> future = new CompletableFuture<>();
-            future.completeExceptionally(new DashXValidationException(
-                    "UpsertIssueInput cannot be null"));
+            future.completeExceptionally(
+                new DashXValidationException("UpsertIssueInput cannot be null")
+            );
             return future;
         }
 
@@ -423,25 +501,45 @@ public class DashX {
      * @return A CompletableFuture that will be completed with the list of issues or completed
      *         exceptionally if there are GraphQL errors or execution errors.
      */
-    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter,
-            List<Map<String, Object>> order, Integer limit, Integer page, String targetEnvironment) {
+    public CompletableFuture<List<Issue>> listIssues(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order,
+        Integer limit,
+        Integer page,
+        String targetEnvironment
+    ) {
         ensureConfigured();
 
-        logger.debug("Listing issues with filter: {}, limit: {}, page: {}", filter, limit, page);
-        return issueService.listIssues(filter, order, limit, page, targetEnvironment).toFuture();
+        logger.debug(
+            "Listing issues with filter: {}, limit: {}, page: {}",
+            filter,
+            limit,
+            page
+        );
+        return issueService
+            .listIssues(filter, order, limit, page, targetEnvironment)
+            .toFuture();
     }
 
-    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter,
-            List<Map<String, Object>> order, Integer limit, Integer page) {
+    public CompletableFuture<List<Issue>> listIssues(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order,
+        Integer limit,
+        Integer page
+    ) {
         return listIssues(filter, order, limit, page, null);
     }
 
-    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter,
-            List<Map<String, Object>> order) {
+    public CompletableFuture<List<Issue>> listIssues(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order
+    ) {
         return listIssues(filter, order, null, null, null);
     }
 
-    public CompletableFuture<List<Issue>> listIssues(Map<String, Object> filter) {
+    public CompletableFuture<List<Issue>> listIssues(
+        Map<String, Object> filter
+    ) {
         return listIssues(filter, null, null, null, null);
     }
 
@@ -458,15 +556,21 @@ public class DashX {
      *         the count of matching issues, or completed exceptionally if there are GraphQL errors
      *         or execution errors.
      */
-    public CompletableFuture<AggregateResponse> aggregateIssues(Map<String, Object> filter,
-            String targetEnvironment) {
+    public CompletableFuture<AggregateResponse> aggregateIssues(
+        Map<String, Object> filter,
+        String targetEnvironment
+    ) {
         ensureConfigured();
 
         logger.debug("Aggregating issues with filter: {}", filter);
-        return issueService.aggregateIssues(filter, targetEnvironment).toFuture();
+        return issueService
+            .aggregateIssues(filter, targetEnvironment)
+            .toFuture();
     }
 
-    public CompletableFuture<AggregateResponse> aggregateIssues(Map<String, Object> filter) {
+    public CompletableFuture<AggregateResponse> aggregateIssues(
+        Map<String, Object> filter
+    ) {
         return aggregateIssues(filter, null);
     }
 
@@ -481,11 +585,16 @@ public class DashX {
      * @return A CompletableFuture that will be completed with the created Broadcast or completed
      *         exceptionally if there are GraphQL errors or execution errors.
      */
-    public CompletableFuture<Broadcast> sendBroadcast(CreateBroadcastInput input) {
+    public CompletableFuture<Broadcast> sendBroadcast(
+        CreateBroadcastInput input
+    ) {
         if (input == null) {
             CompletableFuture<Broadcast> future = new CompletableFuture<>();
-            future.completeExceptionally(new DashXValidationException(
-                    "CreateBroadcastInput cannot be null"));
+            future.completeExceptionally(
+                new DashXValidationException(
+                    "CreateBroadcastInput cannot be null"
+                )
+            );
             return future;
         }
 
@@ -493,5 +602,61 @@ public class DashX {
 
         logger.debug("Creating broadcast");
         return broadcastService.createBroadcast(input).toFuture();
+    }
+
+    /** Default identity-token lifetime: 7 days. */
+    private static final long DEFAULT_IDENTITY_TOKEN_EXPIRY_SECONDS =
+        60L * 60 * 24 * 7;
+
+    /**
+     * Generates an identity token (a short-lived JWT) for a visitor, used by the
+     * browser / React SDKs to authenticate that identity.
+     *
+     * @param uid the identity's uid
+     * @param kind the identity kind, {@code "USER"} or {@code "VISITOR"}
+     * @param expiresInSeconds token lifetime in seconds
+     * @return the signed JWT
+     */
+    public String generateIdentityToken(
+        String uid,
+        String kind,
+        long expiresInSeconds
+    ) {
+        if (uid == null || uid.trim().isEmpty()) {
+            throw new DashXValidationException("uid cannot be null or empty");
+        }
+
+        ensureConfigured();
+
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + expiresInSeconds * 1000L);
+        SecretKey key = new SecretKeySpec(
+            privateKey.getBytes(StandardCharsets.UTF_8),
+            "HmacSHA256"
+        );
+
+        return Jwts.builder()
+            .claim("kind", kind)
+            .claim("uid", uid)
+            .issuedAt(now)
+            .expiration(expiration)
+            .signWith(key, Jwts.SIG.HS256)
+            .compact();
+    }
+
+    public String generateIdentityToken(String uid, String kind) {
+        return generateIdentityToken(
+            uid,
+            kind,
+            DEFAULT_IDENTITY_TOKEN_EXPIRY_SECONDS
+        );
+    }
+
+    public String generateIdentityToken(String uid) {
+        return generateIdentityToken(
+            uid,
+            "USER",
+            DEFAULT_IDENTITY_TOKEN_EXPIRY_SECONDS
+        );
     }
 }

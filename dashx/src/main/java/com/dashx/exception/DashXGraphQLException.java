@@ -8,6 +8,7 @@ import java.util.List;
  * Contains the list of GraphQL errors returned by the server.
  */
 public class DashXGraphQLException extends DashXException {
+
     private final List<GraphQLError> errors;
 
     /**
@@ -56,12 +57,16 @@ public class DashXGraphQLException extends DashXException {
         }
 
         StringBuilder sb = new StringBuilder("GraphQL errors occurred:\n");
+
         for (int i = 0; i < errors.size(); i++) {
-            sb.append(i + 1).append(". ").append(errors.get(i).getMessage());
+            sb.append(i + 1)
+                .append(". ")
+                .append(errors.get(i).getMessage());
             if (i < errors.size() - 1) {
                 sb.append("\n");
             }
         }
+
         return sb.toString();
     }
 }

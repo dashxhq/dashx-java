@@ -5,6 +5,7 @@ package com.dashx.exception;
  * All custom exceptions in the DashX SDK should extend this class.
  */
 public class DashXException extends RuntimeException {
+
     /**
      * Constructs a new DashX exception with the specified detail message.
      *

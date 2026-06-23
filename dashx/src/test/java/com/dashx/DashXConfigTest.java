@@ -1,18 +1,19 @@
 package com.dashx;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.dashx.exception.DashXConfigurationException;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class DashXConfigTest {
 
     @Test
     void testBuilderWithRequiredFields() {
         DashXConfig config = new DashXConfig.Builder()
-                .publicKey("test-public-key")
-                .privateKey("test-private-key")
-                .targetEnvironment("test")
-                .build();
+            .publicKey("test-public-key")
+            .privateKey("test-private-key")
+            .targetEnvironment("test")
+            .build();
 
         assertEquals("test-public-key", config.getPublicKey());
         assertEquals("test-private-key", config.getPrivateKey());
@@ -23,15 +24,15 @@ class DashXConfigTest {
     @Test
     void testBuilderWithAllFields() {
         DashXConfig config = new DashXConfig.Builder()
-                .publicKey("test-public-key")
-                .privateKey("test-private-key")
-                .targetEnvironment("production")
-                .baseUrl("https://custom.api.com/graphql")
-                .connectionTimeout(15000)
-                .responseTimeout(45000)
-                .maxConnections(1000)
-                .maxIdleTime(30000)
-                .build();
+            .publicKey("test-public-key")
+            .privateKey("test-private-key")
+            .targetEnvironment("production")
+            .baseUrl("https://custom.api.com/graphql")
+            .connectionTimeout(15000)
+            .responseTimeout(45000)
+            .maxConnections(1000)
+            .maxIdleTime(30000)
+            .build();
 
         assertEquals("test-public-key", config.getPublicKey());
         assertEquals("test-private-key", config.getPrivateKey());
@@ -46,10 +47,10 @@ class DashXConfigTest {
     @Test
     void testBuilderWithDefaults() {
         DashXConfig config = new DashXConfig.Builder()
-                .publicKey("test-public-key")
-                .privateKey("test-private-key")
-                .targetEnvironment("test")
-                .build();
+            .publicKey("test-public-key")
+            .privateKey("test-private-key")
+            .targetEnvironment("test")
+            .build();
 
         // Check default values
         assertEquals(10000, config.getConnectionTimeout());
@@ -62,9 +63,9 @@ class DashXConfigTest {
     void testBuilderThrowsExceptionWhenPublicKeyIsNull() {
         assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
-                    .privateKey("test-private-key")
-                    .targetEnvironment("test")
-                    .build();
+                .privateKey("test-private-key")
+                .targetEnvironment("test")
+                .build();
         });
     }
 
@@ -72,9 +73,9 @@ class DashXConfigTest {
     void testBuilderThrowsExceptionWhenPrivateKeyIsNull() {
         assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
-                    .publicKey("test-public-key")
-                    .targetEnvironment("test")
-                    .build();
+                .publicKey("test-public-key")
+                .targetEnvironment("test")
+                .build();
         });
     }
 
@@ -82,9 +83,9 @@ class DashXConfigTest {
     void testBuilderThrowsExceptionWhenTargetEnvironmentIsNull() {
         assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
-                    .publicKey("test-public-key")
-                    .privateKey("test-private-key")
-                    .build();
+                .publicKey("test-public-key")
+                .privateKey("test-private-key")
+                .build();
         });
     }
 
@@ -92,11 +93,11 @@ class DashXConfigTest {
     void testBuilderThrowsExceptionForNegativeConnectionTimeout() {
         assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
-                    .publicKey("key")
-                    .privateKey("secret")
-                    .targetEnvironment("test")
-                    .connectionTimeout(-1)
-                    .build();
+                .publicKey("key")
+                .privateKey("secret")
+                .targetEnvironment("test")
+                .connectionTimeout(-1)
+                .build();
         });
     }
 
@@ -104,11 +105,11 @@ class DashXConfigTest {
     void testBuilderThrowsExceptionForZeroResponseTimeout() {
         assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
-                    .publicKey("key")
-                    .privateKey("secret")
-                    .targetEnvironment("test")
-                    .responseTimeout(0)
-                    .build();
+                .publicKey("key")
+                .privateKey("secret")
+                .targetEnvironment("test")
+                .responseTimeout(0)
+                .build();
         });
     }
 
@@ -116,11 +117,11 @@ class DashXConfigTest {
     void testBuilderThrowsExceptionForNegativeMaxConnections() {
         assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
-                    .publicKey("key")
-                    .privateKey("secret")
-                    .targetEnvironment("test")
-                    .maxConnections(-5)
-                    .build();
+                .publicKey("key")
+                .privateKey("secret")
+                .targetEnvironment("test")
+                .maxConnections(-5)
+                .build();
         });
     }
 
@@ -128,11 +129,11 @@ class DashXConfigTest {
     void testBuilderThrowsExceptionForZeroMaxIdleTime() {
         assertThrows(DashXConfigurationException.class, () -> {
             new DashXConfig.Builder()
-                    .publicKey("key")
-                    .privateKey("secret")
-                    .targetEnvironment("test")
-                    .maxIdleTime(0)
-                    .build();
+                .publicKey("key")
+                .privateKey("secret")
+                .targetEnvironment("test")
+                .maxIdleTime(0)
+                .build();
         });
     }
 
@@ -140,9 +141,9 @@ class DashXConfigTest {
     void testBuilderChaining() {
         DashXConfig.Builder builder = new DashXConfig.Builder();
         DashXConfig.Builder result = builder
-                .publicKey("key")
-                .privateKey("secret")
-                .targetEnvironment("test");
+            .publicKey("key")
+            .privateKey("secret")
+            .targetEnvironment("test");
 
         assertSame(builder, result.publicKey("key"));
         assertNotNull(result);

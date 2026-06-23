@@ -5,6 +5,7 @@ package com.dashx.exception;
  * This includes invalid URLs, missing required configuration, or invalid configuration values.
  */
 public class DashXConfigurationException extends DashXException {
+
     /**
      * Constructs a new configuration exception with the specified detail message.
      *
