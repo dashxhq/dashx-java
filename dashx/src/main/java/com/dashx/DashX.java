@@ -612,10 +612,17 @@ public class DashX {
      * Generates an identity token (a short-lived JWT) for a visitor, used by the
      * browser / React SDKs to authenticate that identity.
      *
+     * <p>The {@code kind} is matched case-insensitively and normalized to the
+     * uppercase form the backend expects ({@code "USER"} / {@code "VISITOR"}); any
+     * other value is rejected with a {@link DashXValidationException}. Note the JWT
+     * is HMAC-signed with the configured private key, which must be at least 32
+     * bytes (256 bits) for HS256.
+     *
      * @param uid the identity's uid
-     * @param kind the identity kind, {@code "USER"} or {@code "VISITOR"}
+     * @param kind the identity kind, {@code "USER"} or {@code "VISITOR"} (case-insensitive)
      * @param expiresInSeconds token lifetime in seconds
      * @return the signed JWT
+     * @throws DashXValidationException if {@code uid} is blank or {@code kind} is not USER/VISITOR
      */
     public String generateIdentityToken(
         String uid,
@@ -624,6 +631,20 @@ public class DashX {
     ) {
         if (uid == null || uid.trim().isEmpty()) {
             throw new DashXValidationException("uid cannot be null or empty");
+        }
+
+        if (kind == null) {
+            throw new DashXValidationException("kind cannot be null");
+        }
+
+        // The backend deserializes `kind` into a SCREAMING_SNAKE_CASE enum and accepts
+        // only "USER"/"VISITOR"; normalize here so a token doesn't sign cleanly only to
+        // be rejected at the API with a confusing error.
+        String normalizedKind = kind.trim().toUpperCase(Locale.ROOT);
+        if (!normalizedKind.equals("USER") && !normalizedKind.equals("VISITOR")) {
+            throw new DashXValidationException(
+                "kind must be \"USER\" or \"VISITOR\""
+            );
         }
 
         ensureConfigured();
@@ -636,7 +657,7 @@ public class DashX {
         );
 
         return Jwts.builder()
-            .claim("kind", kind)
+            .claim("kind", normalizedKind)
             .claim("uid", uid)
             .issuedAt(now)
             .expiration(expiration)
