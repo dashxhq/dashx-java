@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
  * Issues can represent tickets, tasks, bugs, or any trackable work items in your system.
  */
 public class IssueService {
+
     private final DashXGraphQLClient client;
     private final String fullIssueProjection;
 
@@ -27,30 +28,43 @@ public class IssueService {
     public IssueService(DashXGraphQLClient client) {
         this.client = client;
         this.fullIssueProjection = """
-                {
+            {
+                id
+                workspaceId
+                issueStatusId
+                createdById
+                environmentId
+                requestedById
+                spaceId
+                parentId
+                assigneeId
+                groupId
+                title
+                description
+                position
+                properties
+                createdAt
+                updatedAt
+                issueTypeId
+                dueAt
+                number
+                idempotencyKey
+                priority
+                issueStatus {
                     id
                     workspaceId
-                    issueStatusId
-                    createdById
-                    environmentId
-                    requestedById
-                    spaceId
-                    parentId
-                    assigneeId
-                    groupId
-                    title
-                    description
+                    issueTypeId
+                    kind
+                    name
+                    identifier
+                    color
                     position
-                    properties
+                    isDefault
                     createdAt
                     updatedAt
-                    issueTypeId
-                    dueAt
-                    number
-                    idempotencyKey
-                    priority
                 }
-                """;
+            }
+            """;
     }
 
     /**
@@ -61,13 +75,17 @@ public class IssueService {
      */
     public Mono<Issue> createIssue(CreateIssueInput input) {
         String query =
-                "mutation CreateIssue($input: CreateIssueInput!) { createIssue(input: $input) "
-                        + this.fullIssueProjection + " }";
+            "mutation CreateIssue($input: CreateIssueInput!) { createIssue(input: $input) " +
+            this.fullIssueProjection +
+            " }";
 
         Map<String, Object> variables = Map.of("input", input);
 
-        return client.execute(query, variables)
-                .map(response -> response.extractValueAsObject("createIssue", Issue.class));
+        return client
+            .execute(query, variables)
+            .map(response ->
+                response.extractValueAsObject("createIssue", Issue.class)
+            );
     }
 
     /**
@@ -79,13 +97,38 @@ public class IssueService {
      */
     public Mono<Issue> upsertIssue(UpsertIssueInput input) {
         String query =
-                "mutation UpsertIssue($input: UpsertIssueInput!) { upsertIssue(input: $input) "
-                        + this.fullIssueProjection + " }";
+            "mutation UpsertIssue($input: UpsertIssueInput!) { upsertIssue(input: $input) " +
+            this.fullIssueProjection +
+            " }";
 
         Map<String, Object> variables = Map.of("input", input);
 
-        return client.execute(query, variables)
-                .map(response -> response.extractValueAsObject("upsertIssue", Issue.class));
+        return client
+            .execute(query, variables)
+            .map(response ->
+                response.extractValueAsObject("upsertIssue", Issue.class)
+            );
+    }
+
+    /**
+     * Fetches a single issue by its ID.
+     *
+     * @param id the unique identifier of the issue to fetch
+     * @return a Mono that emits the matching Issue object with all its fields populated
+     */
+    public Mono<Issue> getIssue(String id) {
+        String query =
+            "query GetIssue($id: UUID!) { issue(id: $id) " +
+            this.fullIssueProjection +
+            " }";
+
+        Map<String, Object> variables = Map.of("id", id);
+
+        return client
+            .execute(query, variables)
+            .map(response ->
+                response.extractValueAsObject("issue", Issue.class)
+            );
     }
 
     /**
@@ -98,21 +141,33 @@ public class IssueService {
      * @param targetEnvironment optional target environment identifier to scope the query
      * @return a Mono that emits a list of Issue objects matching the criteria
      */
-    public Mono<List<Issue>> listIssues(Map<String, Object> filter,
-            List<Map<String, Object>> order, Integer limit, Integer page, String targetEnvironment) {
+    public Mono<List<Issue>> listIssues(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order,
+        Integer limit,
+        Integer page,
+        String targetEnvironment
+    ) {
         String query =
-                "query ListIssues($filter: JSON, $order: [JSON!], $limit: Int, $page: Int, $targetEnvironment: String) { issuesList(filter: $filter, order: $order, limit: $limit, page: $page, targetEnvironment: $targetEnvironment) "
-                        + this.fullIssueProjection + " }";
+            "query ListIssues($filter: JSON, $order: [JSON!], $limit: Int, $page: Int, $targetEnvironment: String) { issuesList(filter: $filter, order: $order, limit: $limit, page: $page, targetEnvironment: $targetEnvironment) " +
+            this.fullIssueProjection +
+            " }";
 
         Map<String, Object> variables = new HashMap<>();
         if (filter != null) variables.put("filter", filter);
         if (order != null) variables.put("order", order);
         if (limit != null) variables.put("limit", limit);
         if (page != null) variables.put("page", page);
-        if (targetEnvironment != null) variables.put("targetEnvironment", targetEnvironment);
+        if (targetEnvironment != null) variables.put(
+            "targetEnvironment",
+            targetEnvironment
+        );
 
         return client.execute(query, variables).map(response -> {
-            Issue[] issuesArray = response.extractValueAsObject("issuesList", Issue[].class);
+            Issue[] issuesArray = response.extractValueAsObject(
+                "issuesList",
+                Issue[].class
+            );
             return issuesArray != null ? List.of(issuesArray) : List.of();
         });
     }
@@ -124,16 +179,27 @@ public class IssueService {
      * @param targetEnvironment optional target environment identifier to scope the query
      * @return a Mono that emits an AggregateResponse containing the count of matching issues
      */
-    public Mono<AggregateResponse> aggregateIssues(Map<String, Object> filter,
-            String targetEnvironment) {
+    public Mono<AggregateResponse> aggregateIssues(
+        Map<String, Object> filter,
+        String targetEnvironment
+    ) {
         String query =
-                "query AggregateIssues($filter: JSON, $targetEnvironment: String) { issuesAggregate(filter: $filter, targetEnvironment: $targetEnvironment) { count } }";
+            "query AggregateIssues($filter: JSON, $targetEnvironment: String) { issuesAggregate(filter: $filter, targetEnvironment: $targetEnvironment) { count } }";
 
         Map<String, Object> variables = new HashMap<>();
         if (filter != null) variables.put("filter", filter);
-        if (targetEnvironment != null) variables.put("targetEnvironment", targetEnvironment);
+        if (targetEnvironment != null) variables.put(
+            "targetEnvironment",
+            targetEnvironment
+        );
 
-        return client.execute(query, variables).map(response -> response
-                .extractValueAsObject("issuesAggregate", AggregateResponse.class));
+        return client
+            .execute(query, variables)
+            .map(response ->
+                response.extractValueAsObject(
+                    "issuesAggregate",
+                    AggregateResponse.class
+                )
+            );
     }
 }

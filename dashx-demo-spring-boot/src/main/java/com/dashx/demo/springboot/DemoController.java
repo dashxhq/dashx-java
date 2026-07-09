@@ -6,16 +6,18 @@ import com.dashx.graphql.generated.types.Broadcast;
 import com.dashx.graphql.generated.types.CreateBroadcastInput;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.Issue;
+import com.dashx.graphql.generated.types.IssueStatus;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
 import com.dashx.graphql.utils.SearchRecordsOptions;
-import java.util.concurrent.CompletableFuture;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class DemoController {
+
     private final DashX dashX;
 
     public DemoController(DashX dashX) {
@@ -29,92 +31,138 @@ public class DemoController {
 
     @GetMapping("/identify")
     public CompletableFuture<Map<String, Object>> identify(
-            @RequestParam Map<String, Object> options) {
-
-        return dashX.identify(options).thenApply(response -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("id", response.getId());
-            result.put("firstName", response.getFirstName());
-            result.put("lastName", response.getLastName());
-            result.put("email", response.getEmail());
-            result.put("phone", response.getPhone());
-            result.put("name", response.getName());
-            result.put("anonymousUid", response.getAnonymousUid());
-            result.put("uid", response.getUid());
-            return result;
-        }).exceptionally(ex -> {
-            throw new RuntimeException("Failed to identify user: " + ex.getMessage(), ex);
-        });
+        @RequestParam Map<String, Object> options
+    ) {
+        return dashX
+            .identify(options)
+            .thenApply(response -> {
+                Map<String, Object> result = new HashMap<>();
+                result.put("id", response.getId());
+                result.put("firstName", response.getFirstName());
+                result.put("lastName", response.getLastName());
+                result.put("email", response.getEmail());
+                result.put("phone", response.getPhone());
+                result.put("name", response.getName());
+                result.put("anonymousUid", response.getAnonymousUid());
+                result.put("uid", response.getUid());
+                return result;
+            })
+            .exceptionally(ex -> {
+                throw new RuntimeException(
+                    "Failed to identify user: " + ex.getMessage(),
+                    ex
+                );
+            });
     }
 
     @GetMapping("/track")
-    public CompletableFuture<Map<String, Object>> trackEvent(@RequestParam String event,
-            @RequestParam(required = false) String uid) {
-
-        return dashX.track(event, uid).thenApply(response -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("status", response.getSuccess() ? "success" : "error");
-            result.put("event", event);
-            return result;
-        }).exceptionally(ex -> {
-            throw new RuntimeException("Failed to track event '" + event + "': " + ex.getMessage(), ex);
-        });
+    public CompletableFuture<Map<String, Object>> trackEvent(
+        @RequestParam String event,
+        @RequestParam(required = false) String uid
+    ) {
+        return dashX
+            .track(event, uid)
+            .thenApply(response -> {
+                Map<String, Object> result = new HashMap<>();
+                result.put(
+                    "status",
+                    response.getSuccess() ? "success" : "error"
+                );
+                result.put("event", event);
+                return result;
+            })
+            .exceptionally(ex -> {
+                throw new RuntimeException(
+                    "Failed to track event '" + event + "': " + ex.getMessage(),
+                    ex
+                );
+            });
     }
 
     @GetMapping("/track-with-data")
     public CompletableFuture<Map<String, Object>> trackEventWithData(
-            @RequestParam String event,
-            @RequestParam(required = false) String uid,
-            @RequestParam(required = false) String dataKey,
-            @RequestParam(required = false) String dataValue) {
-
+        @RequestParam String event,
+        @RequestParam(required = false) String uid,
+        @RequestParam(required = false) String dataKey,
+        @RequestParam(required = false) String dataValue
+    ) {
         Map<String, Object> data = new HashMap<>();
         if (dataKey != null && dataValue != null) {
             data.put(dataKey, dataValue);
         }
 
-        return dashX.track(event, uid, data).thenApply(response -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("status", response.getSuccess() ? "success" : "error");
-            result.put("event", event);
-            result.put("data", data);
-            return result;
-        }).exceptionally(ex -> {
-            throw new RuntimeException("Failed to track event '" + event + "' with data: " + ex.getMessage(), ex);
-        });
+        return dashX
+            .track(event, uid, data)
+            .thenApply(response -> {
+                Map<String, Object> result = new HashMap<>();
+                result.put(
+                    "status",
+                    response.getSuccess() ? "success" : "error"
+                );
+                result.put("event", event);
+                result.put("data", data);
+                return result;
+            })
+            .exceptionally(ex -> {
+                throw new RuntimeException(
+                    "Failed to track event '" +
+                        event +
+                        "' with data: " +
+                        ex.getMessage(),
+                    ex
+                );
+            });
     }
 
     @GetMapping("/get-asset")
-    public CompletableFuture<Map<String, Object>> getAsset(@RequestParam String id) {
-        return dashX.getAsset(id).thenApply(response -> {
-            Map<String, Object> result = new HashMap<>();
-            result.put("id", response.getId());
-            result.put("url", response.getUrl());
-            return result;
-        }).exceptionally(ex -> {
-            throw new RuntimeException("Failed to get asset with id '" + id + "': " + ex.getMessage(), ex);
-        });
+    public CompletableFuture<Map<String, Object>> getAsset(
+        @RequestParam String id
+    ) {
+        return dashX
+            .getAsset(id)
+            .thenApply(response -> {
+                Map<String, Object> result = new HashMap<>();
+                result.put("id", response.getId());
+                result.put("url", response.getUrl());
+                return result;
+            })
+            .exceptionally(ex -> {
+                throw new RuntimeException(
+                    "Failed to get asset with id '" +
+                        id +
+                        "': " +
+                        ex.getMessage(),
+                    ex
+                );
+            });
     }
 
     @GetMapping("/list-assets")
-    public CompletableFuture<List<Asset>> listAssets(@RequestParam(required = false) String resourceId) {
+    public CompletableFuture<List<Asset>> listAssets(
+        @RequestParam(required = false) String resourceId
+    ) {
         CompletableFuture<List<Asset>> future;
         if (resourceId != null && !resourceId.isEmpty()) {
-            future = dashX.listAssets(Map.of("resourceId", Map.of("eq", resourceId)));
+            future = dashX.listAssets(
+                Map.of("resourceId", Map.of("eq", resourceId))
+            );
         } else {
             future = dashX.listAssets();
         }
         return future.exceptionally(ex -> {
-            throw new RuntimeException("Failed to list assets: " + ex.getMessage(), ex);
+            throw new RuntimeException(
+                "Failed to list assets: " + ex.getMessage(),
+                ex
+            );
         });
     }
 
     @GetMapping("/list-assets-filtered")
     public CompletableFuture<List<Asset>> listAssetsFiltered(
-            @RequestParam(required = false) String resourceId,
-            @RequestParam(required = false) String orderField,
-            @RequestParam(required = false) String orderDirection) {
-
+        @RequestParam(required = false) String resourceId,
+        @RequestParam(required = false) String orderField,
+        @RequestParam(required = false) String orderDirection
+    ) {
         Map<String, Object> filter = null;
         if (resourceId != null && !resourceId.isEmpty()) {
             filter = Map.of("resourceId", Map.of("eq", resourceId));
@@ -127,31 +175,81 @@ public class DemoController {
         }
 
         return dashX.listAssets(filter, order).exceptionally(ex -> {
-            throw new RuntimeException("Failed to list filtered assets: " + ex.getMessage(), ex);
+            throw new RuntimeException(
+                "Failed to list filtered assets: " + ex.getMessage(),
+                ex
+            );
         });
     }
 
     @GetMapping("/search-records")
     public CompletableFuture<List<Map<String, Object>>> searchRecords(
-            @RequestParam String resource,
-            @RequestParam(required = false) Integer limit,
-            @RequestParam(required = false) Integer page) {
-
+        @RequestParam String resource,
+        @RequestParam(required = false) Integer limit,
+        @RequestParam(required = false) Integer page
+    ) {
         SearchRecordsOptions options = SearchRecordsOptions.newBuilder()
-                .order(List.of(Map.of("createdAt", "desc")))
-                .limit(limit)
-                .page(page)
-                .build();
+            .order(List.of(Map.of("createdAt", "desc")))
+            .limit(limit)
+            .page(page)
+            .build();
 
         return dashX.searchRecords(resource, options).exceptionally(ex -> {
-            throw new RuntimeException("Failed to search records for resource '" + resource + "': " + ex.getMessage(), ex);
+            throw new RuntimeException(
+                "Failed to search records for resource '" +
+                    resource +
+                    "': " +
+                    ex.getMessage(),
+                ex
+            );
         });
     }
 
+    @GetMapping("/get-issue")
+    public CompletableFuture<Map<String, Object>> getIssue(
+        @RequestParam String id
+    ) {
+        return dashX
+            .getIssue(id)
+            .thenApply(issue -> {
+                Map<String, Object> result = new HashMap<>();
+                result.put("id", issue.getId());
+                result.put("title", issue.getTitle());
+                result.put("number", issue.getNumber());
+                result.put("priority", issue.getPriority());
+                result.put("issueStatusId", issue.getIssueStatusId());
+
+                // issueStatus is non-null in the schema, so it's always populated.
+                IssueStatus status = issue.getIssueStatus();
+                Map<String, Object> statusResult = new HashMap<>();
+                statusResult.put("id", status.getId());
+                statusResult.put("kind", status.getKind());
+                statusResult.put("name", status.getName());
+                statusResult.put("identifier", status.getIdentifier());
+                statusResult.put("color", status.getColor());
+                statusResult.put("position", status.getPosition());
+                statusResult.put("isDefault", status.getIsDefault());
+                result.put("issueStatus", statusResult);
+
+                return result;
+            })
+            .exceptionally(ex -> {
+                throw new RuntimeException(
+                    "Failed to get issue with id '" +
+                        id +
+                        "': " +
+                        ex.getMessage(),
+                    ex
+                );
+            });
+    }
+
     @GetMapping("/create-issue")
-    public CompletableFuture<Issue> createIssue(@RequestParam String title,
-            @RequestParam(required = false) String issueType,
-            @RequestParam(required = false) String issueStatus) {
+    public CompletableFuture<Issue> createIssue(
+        @RequestParam String title,
+        @RequestParam(required = false) String issueType,
+        @RequestParam(required = false) String issueStatus
+    ) {
         CreateIssueInput.Builder builder = CreateIssueInput.newBuilder();
 
         builder.title(title);
@@ -168,17 +266,23 @@ public class DemoController {
         CreateIssueInput input = builder.build();
 
         return dashX.createIssue(input).exceptionally(ex -> {
-            throw new RuntimeException("Failed to create issue with title '" + title + "': " + ex.getMessage(), ex);
+            throw new RuntimeException(
+                "Failed to create issue with title '" +
+                    title +
+                    "': " +
+                    ex.getMessage(),
+                ex
+            );
         });
     }
 
     @GetMapping("/upsert-issue")
     public CompletableFuture<Issue> upsertIssue(
-            @RequestParam String title,
-            @RequestParam(required = false) String issueType,
-            @RequestParam(required = false) String issueStatus,
-            @RequestParam(required = false) String idempotencyKey) {
-
+        @RequestParam String title,
+        @RequestParam(required = false) String issueType,
+        @RequestParam(required = false) String issueStatus,
+        @RequestParam(required = false) String idempotencyKey
+    ) {
         UpsertIssueInput.Builder builder = UpsertIssueInput.newBuilder();
 
         builder.title(title);
@@ -195,30 +299,45 @@ public class DemoController {
         UpsertIssueInput input = builder.build();
 
         return dashX.upsertIssue(input).exceptionally(ex -> {
-            throw new RuntimeException("Failed to upsert issue with title '" + title + "': " + ex.getMessage(), ex);
+            throw new RuntimeException(
+                "Failed to upsert issue with title '" +
+                    title +
+                    "': " +
+                    ex.getMessage(),
+                ex
+            );
         });
     }
 
     @GetMapping("/send-push-message")
     public CompletableFuture<Broadcast> sendPushMessage(
-            @RequestParam List<String> to,
-            @RequestParam(required = false) String templateId,
-            @RequestParam(required = false) String templateIdentifier,
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) String body,
-            @RequestParam(required = false) String name) {
-        CreateBroadcastInput.Builder builder = CreateBroadcastInput.newBuilder();
+        @RequestParam List<String> to,
+        @RequestParam(required = false) String templateId,
+        @RequestParam(required = false) String templateIdentifier,
+        @RequestParam(required = false) String title,
+        @RequestParam(required = false) String body,
+        @RequestParam(required = false) String name
+    ) {
+        CreateBroadcastInput.Builder builder =
+            CreateBroadcastInput.newBuilder();
 
-        builder.templateSubkind(com.dashx.graphql.generated.types.TemplateSubkind.PUSH);
+        builder.templateSubkind(
+            com.dashx.graphql.generated.types.TemplateSubkind.PUSH
+        );
 
         boolean hasTemplateId = templateId != null && !templateId.isEmpty();
-        boolean hasTemplateIdentifier = templateIdentifier != null && !templateIdentifier.isEmpty();
+        boolean hasTemplateIdentifier =
+            templateIdentifier != null && !templateIdentifier.isEmpty();
         boolean hasTitleAndBody =
-                title != null && !title.isEmpty() && body != null && !body.isEmpty();
+            title != null &&
+            !title.isEmpty() &&
+            body != null &&
+            !body.isEmpty();
 
         if (!hasTemplateId && !hasTemplateIdentifier && !hasTitleAndBody) {
             throw new IllegalArgumentException(
-                    "You must provide either templateId, templateIdentifier, or both title and body.");
+                "You must provide either templateId, templateIdentifier, or both title and body."
+            );
         }
 
         if (templateId != null && !templateId.isEmpty()) {
@@ -250,7 +369,10 @@ public class DemoController {
         CreateBroadcastInput input = builder.build();
 
         return dashX.sendBroadcast(input).exceptionally(ex -> {
-            throw new RuntimeException("Failed to create broadcast: " + ex.getMessage(), ex);
+            throw new RuntimeException(
+                "Failed to create broadcast: " + ex.getMessage(),
+                ex
+            );
         });
     }
 }
