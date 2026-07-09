@@ -49,6 +49,19 @@ public class IssueService {
                     number
                     idempotencyKey
                     priority
+                    issueStatus {
+                        id
+                        workspaceId
+                        issueTypeId
+                        kind
+                        name
+                        identifier
+                        color
+                        position
+                        isDefault
+                        createdAt
+                        updatedAt
+                    }
                 }
                 """;
     }
@@ -86,6 +99,23 @@ public class IssueService {
 
         return client.execute(query, variables)
                 .map(response -> response.extractValueAsObject("upsertIssue", Issue.class));
+    }
+
+    /**
+     * Fetches a single issue by its ID.
+     *
+     * @param id the unique identifier of the issue to fetch
+     * @return a Mono that emits the matching Issue object with all its fields populated
+     */
+    public Mono<Issue> getIssue(String id) {
+        String query =
+                "query GetIssue($id: UUID!) { issue(id: $id) "
+                        + this.fullIssueProjection + " }";
+
+        Map<String, Object> variables = Map.of("id", id);
+
+        return client.execute(query, variables)
+                .map(response -> response.extractValueAsObject("issue", Issue.class));
     }
 
     /**

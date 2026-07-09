@@ -491,6 +491,28 @@ public class DashX {
     }
 
     /**
+     * Fetches a single issue by its id.
+     *
+     * @param id The id of the issue to fetch
+     * @return A CompletableFuture that will be completed with the issue or completed
+     *         exceptionally if there are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<Issue> getIssue(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            CompletableFuture<Issue> future = new CompletableFuture<>();
+            future.completeExceptionally(
+                new DashXValidationException("Issue ID cannot be null or empty")
+            );
+            return future;
+        }
+
+        ensureConfigured();
+
+        logger.debug("Getting issue with id: '{}'", id);
+        return issueService.getIssue(id).toFuture();
+    }
+
+    /**
      * Lists issues with optional filtering, ordering, and pagination.
      *
      * @param filter Optional filter criteria

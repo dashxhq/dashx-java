@@ -166,6 +166,40 @@ class DashXValidationTest {
     }
 
     @Test
+    void testGetIssueWithNullIdThrowsException() {
+        CompletableFuture<?> future = dashx.getIssue(null);
+
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
+
+        assertTrue(exception.getCause() instanceof DashXValidationException);
+        assertTrue(
+            exception
+                .getCause()
+                .getMessage()
+                .contains("Issue ID cannot be null")
+        );
+    }
+
+    @Test
+    void testGetIssueWithEmptyIdThrowsException() {
+        CompletableFuture<?> future = dashx.getIssue("");
+
+        ExecutionException exception = assertThrows(
+            ExecutionException.class,
+            () -> {
+                future.get();
+            }
+        );
+
+        assertTrue(exception.getCause() instanceof DashXValidationException);
+    }
+
+    @Test
     void testSearchRecordsWithNullResourceThrowsException() {
         CompletableFuture<?> future = dashx.searchRecords(null);
 

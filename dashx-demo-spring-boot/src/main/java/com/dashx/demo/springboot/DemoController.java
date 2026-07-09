@@ -6,6 +6,7 @@ import com.dashx.graphql.generated.types.Broadcast;
 import com.dashx.graphql.generated.types.CreateBroadcastInput;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.Issue;
+import com.dashx.graphql.generated.types.IssueStatus;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
 import com.dashx.graphql.utils.SearchRecordsOptions;
 import java.util.concurrent.CompletableFuture;
@@ -145,6 +146,34 @@ public class DemoController {
 
         return dashX.searchRecords(resource, options).exceptionally(ex -> {
             throw new RuntimeException("Failed to search records for resource '" + resource + "': " + ex.getMessage(), ex);
+        });
+    }
+
+    @GetMapping("/get-issue")
+    public CompletableFuture<Map<String, Object>> getIssue(@RequestParam String id) {
+        return dashX.getIssue(id).thenApply(issue -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("id", issue.getId());
+            result.put("title", issue.getTitle());
+            result.put("number", issue.getNumber());
+            result.put("priority", issue.getPriority());
+            result.put("issueStatusId", issue.getIssueStatusId());
+
+            // issueStatus is non-null in the schema, so it's always populated.
+            IssueStatus status = issue.getIssueStatus();
+            Map<String, Object> statusResult = new HashMap<>();
+            statusResult.put("id", status.getId());
+            statusResult.put("kind", status.getKind());
+            statusResult.put("name", status.getName());
+            statusResult.put("identifier", status.getIdentifier());
+            statusResult.put("color", status.getColor());
+            statusResult.put("position", status.getPosition());
+            statusResult.put("isDefault", status.getIsDefault());
+            result.put("issueStatus", statusResult);
+
+            return result;
+        }).exceptionally(ex -> {
+            throw new RuntimeException("Failed to get issue with id '" + id + "': " + ex.getMessage(), ex);
         });
     }
 
