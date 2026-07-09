@@ -17,7 +17,8 @@ class DashXIdentityTokenTest {
 
     // HS256 requires a key of at least 256 bits (32 bytes); real DashX private
     // keys are 32 chars, so use a 32-char key here.
-    private static final String PRIVATE_KEY = "0123456789abcdef0123456789abcdef";
+    private static final String PRIVATE_KEY =
+        "0123456789abcdef0123456789abcdef";
 
     private DashX dashx;
 

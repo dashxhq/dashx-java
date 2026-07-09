@@ -663,7 +663,9 @@ public class DashX {
         // only "USER"/"VISITOR"; normalize here so a token doesn't sign cleanly only to
         // be rejected at the API with a confusing error.
         String normalizedKind = kind.trim().toUpperCase(Locale.ROOT);
-        if (!normalizedKind.equals("USER") && !normalizedKind.equals("VISITOR")) {
+        if (
+            !normalizedKind.equals("USER") && !normalizedKind.equals("VISITOR")
+        ) {
             throw new DashXValidationException(
                 "kind must be \"USER\" or \"VISITOR\""
             );
