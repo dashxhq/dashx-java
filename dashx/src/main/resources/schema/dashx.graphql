@@ -162,6 +162,7 @@ input UpsertIssueInput {
     properties: JSON!
     labels: [String!]
     dueAt: Timestamp
+    requestedBy: JSON
 }
 
 input IdentifyAccountInput {
