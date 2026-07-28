@@ -28,12 +28,22 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+// Signing is required by Maven Central but must not be required to install locally.
+// CI supplies the key as ORG_GRADLE_PROJECT_signingInMemoryKey (see .github/workflows/publish.yml),
+// which Gradle exposes as the `signingInMemoryKey` project property; without it,
+// `signAllPublications()` would still attach `.asc` artifacts to the publication and every
+// `publishToMavenLocal` would fail validation on the missing signature files (skipping the sign
+// task alone does not help — the artifacts remain declared).
+def isSigningConfigured = providers.gradleProperty('signingInMemoryKey').isPresent()
+
 mavenPublishing {
     coordinates(group, artifactId, version)
 
     publishToMavenCentral(true)
 
-    signAllPublications()
+    if (isSigningConfigured) {
+        signAllPublications()
+    }
 
     pom {
         name = 'DashX Spring Boot Starter'
