@@ -17,6 +17,7 @@ type Mutation {
     createIssue(input: CreateIssueInput!): Issue!
     upsertIssue(input: UpsertIssueInput!): Issue!
     createBroadcast(input: CreateBroadcastInput!): Broadcast!
+    startInAppChatConversation(input: StartInAppChatConversationInput!): Conversation!
 }
 
 type Account {
@@ -97,6 +98,21 @@ type IssueStatus {
     updatedAt: Timestamp!
 }
 
+type Conversation {
+    id: UUID!
+    workspaceId: UUID!
+    environmentId: UUID!
+    kind: ConversationKind!
+    channel: ConversationChannel!
+    subChannel: ConversationSubChannel
+    name: String
+    idempotencyKey: String
+    lastMessageAt: Timestamp
+    isTest: Boolean!
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
+}
+
 type TrackEventResponse {
     success: Boolean!
 }
@@ -165,6 +181,26 @@ input UpsertIssueInput {
     requestedBy: JSON
 }
 
+# Creates (or idempotently re-finds) an In-App Chat conversation on behalf of a visitor.
+#
+# SERVER-ONLY: the DashX operation rejects identity-token callers, so this is authenticated
+# with the workspace public/private key pair — the same credentials this SDK already sends.
+# A browser must never call it; browsers participate in a conversation they were given.
+#
+# `identityId` and `accountUid` are BOTH required and are different things:
+#   identityId  — the workspace-side Chat Identity (which chat surface / routing).
+#   accountUid  — the visitor's own account `uid` in the target environment (who owns it).
+# Supplying one in place of the other resolves the wrong owner or fails outright.
+input StartInAppChatConversationInput {
+    identityId: UUID!
+    accountUid: String!
+    clientIdempotencyKey: String!
+    content: JSON
+    clientMessageId: String
+    data: JSON
+    issueProperties: JSON
+}
+
 input IdentifyAccountInput {
     uid: String
     anonymousUid: String
@@ -225,6 +261,32 @@ enum AssetUploadStatus {
     FAILED
     CANCELED
     TIMED_OUT
+}
+
+enum ConversationKind {
+    DIRECT
+    NAMED_GROUP
+    ANONYMOUS_GROUP
+}
+
+enum ConversationChannel {
+    EMAIL
+    SMS
+    PUSH
+    CHAT
+    IN_APP
+}
+
+enum ConversationSubChannel {
+    IOS
+    ANDROID
+    WEB
+    WHATSAPP
+    SIGNAL
+    TELEGRAM
+    SLACK
+    MICROSOFT_TEAMS
+    DASHX
 }
 
 enum IssuePriority {

@@ -5,6 +5,7 @@ import com.dashx.exception.DashXValidationException;
 import com.dashx.graphql.AccountService;
 import com.dashx.graphql.AssetService;
 import com.dashx.graphql.BroadcastService;
+import com.dashx.graphql.ConversationService;
 import com.dashx.graphql.EventService;
 import com.dashx.graphql.IssueService;
 import com.dashx.graphql.RecordService;
@@ -12,11 +13,13 @@ import com.dashx.graphql.generated.types.Account;
 import com.dashx.graphql.generated.types.AggregateResponse;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.graphql.generated.types.Broadcast;
+import com.dashx.graphql.generated.types.Conversation;
 import com.dashx.graphql.generated.types.CreateBroadcastInput;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.IdentifyAccountInput;
 import com.dashx.graphql.generated.types.Issue;
 import com.dashx.graphql.generated.types.SearchRecordsInput;
+import com.dashx.graphql.generated.types.StartInAppChatConversationInput;
 import com.dashx.graphql.generated.types.TrackEventInput;
 import com.dashx.graphql.generated.types.TrackEventResponse;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
@@ -64,6 +67,7 @@ public class DashX {
     private RecordService recordService;
     private IssueService issueService;
     private BroadcastService broadcastService;
+    private ConversationService conversationService;
 
     private DashX(String instanceName) {
         this.instanceName = instanceName;
@@ -124,6 +128,7 @@ public class DashX {
         this.recordService = new RecordService(graphqlClient);
         this.issueService = new IssueService(graphqlClient);
         this.broadcastService = new BroadcastService(graphqlClient);
+        this.conversationService = new ConversationService(graphqlClient);
     }
 
     private DashXGraphQLClient createGraphqlClient() {
@@ -488,6 +493,107 @@ public class DashX {
 
         logger.debug("Upserting issue");
         return issueService.upsertIssue(input).toFuture();
+    }
+
+    /**
+     * Starts (or idempotently re-finds) an In-App Chat conversation for a visitor.
+     *
+     * <p>This is a <strong>server-only</strong> operation. DashX rejects identity-token callers,
+     * so conversations are created by your backend with the workspace key pair and the resulting
+     * conversation id is handed to the visitor's client, which then reads and sends within it.
+     *
+     * <p>{@code identityId} and {@code accountUid} are both required and are <em>different</em>
+     * values: {@code identityId} is the workspace-side Chat Identity (which chat surface the
+     * conversation belongs to), while {@code accountUid} is the visitor's own account uid in the
+     * target environment (who owns it). The uid is matched verbatim against an existing account —
+     * it is never created — so an unknown uid fails rather than silently creating an account.
+     *
+     * <p>Retries of one logical start must reuse the same {@code clientIdempotencyKey} (and, when
+     * seeding a first message, the same {@code clientMessageId} and {@code content}); DashX then
+     * returns the same conversation instead of creating a duplicate.
+     *
+     * @param input The input data for starting the conversation.
+     * @return A CompletableFuture completed with the created or re-found conversation — its
+     *         {@code getId()} is the conversation id — or completed exceptionally on validation,
+     *         GraphQL or execution errors.
+     */
+    public CompletableFuture<Conversation> startInAppChatConversation(
+        StartInAppChatConversationInput input
+    ) {
+        try {
+            validateStartInAppChatConversationInput(input);
+        } catch (DashXValidationException e) {
+            CompletableFuture<Conversation> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
+        }
+
+        ensureConfigured();
+
+        logger.debug("Starting In-App Chat conversation");
+        return conversationService.startInAppChatConversation(input).toFuture();
+    }
+
+    /**
+     * Edge validation for {@link #startInAppChatConversation}, kept as a pure function so it is
+     * testable without a configured client or a network call.
+     *
+     * <p>Every rule here mirrors one the DashX operation enforces; the point is a named, immediate
+     * failure instead of a round trip. The server remains authoritative — this must never be
+     * *stricter* than the server, or it would reject requests DashX would have accepted.
+     *
+     * @param input the input to validate
+     * @throws DashXValidationException if the input cannot possibly be accepted
+     */
+    static void validateStartInAppChatConversationInput(
+        StartInAppChatConversationInput input
+    ) {
+        if (input == null) {
+            throw new DashXValidationException(
+                "StartInAppChatConversationInput cannot be null"
+            );
+        }
+        if (isBlank(input.getIdentityId())) {
+            throw new DashXValidationException(
+                "identityId (the workspace Chat Identity) is required"
+            );
+        }
+        if (isBlank(input.getAccountUid())) {
+            throw new DashXValidationException(
+                "accountUid (the visitor's account uid) is required"
+            );
+        }
+        if (isBlank(input.getClientIdempotencyKey())) {
+            throw new DashXValidationException(
+                "clientIdempotencyKey is required"
+            );
+        }
+        if (input.getContent() != null && isBlank(input.getClientMessageId())) {
+            throw new DashXValidationException(
+                "clientMessageId is required when content is provided"
+            );
+        }
+        // `data` and `issueProperties` both ride the first message, so a content-less start would
+        // silently drop them. The server's two checks are deliberately ASYMMETRIC and this mirrors
+        // them exactly: it tests `data.is_some()` on the RAW option, but tests `issueProperties`
+        // after normalization, where an EMPTY object counts as omitted. So `{}` properties on a
+        // content-less start is valid, while `{}` data is not. Treating both alike here would
+        // reject a request DashX accepts.
+        boolean hasIssueProperties =
+            input.getIssueProperties() != null &&
+            !input.getIssueProperties().isEmpty();
+        if (
+            input.getContent() == null &&
+            (input.getData() != null || hasIssueProperties)
+        ) {
+            throw new DashXValidationException(
+                "content (and clientMessageId) is required when data or issueProperties is supplied"
+            );
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     /**
