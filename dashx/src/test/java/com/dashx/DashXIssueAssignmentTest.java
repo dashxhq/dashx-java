@@ -270,15 +270,22 @@ class DashXIssueAssignmentTest {
 
     @Test
     void listGroupMembersByIdFiltersOnGroupIdAndPagesUntilAShortPage() throws Exception {
-        responder = request ->
-            request.get("variables").get("filter").has("createdAt")
+        responder = request -> {
+            if (request.get("query").asText().contains("groupsList")) {
+                return memberGroupResponse();
+            }
+            return request.get("variables").get("filter").has("createdAt")
                 ? accountsPage(100, 7)
                 : accountsPage(0, 100);
+        };
 
         List<Account> members = await(dashx.listGroupMembers(GROUP_ID));
 
         assertEquals(107, members.size());
-        assertEquals(2, requests.size());
+        assertEquals(3, requests.size());
+        // The id is looked up first so its kind can be checked.
+        assertEquals(GROUP_ID, requests.get(0).get("variables").get("filter").get("id").get("eq").asText());
+        requests.remove(0);
         JsonNode first = requests.get(0).get("variables");
         assertEquals(GROUP_ID, first.get("filter").get("groupId").get("eq").asText());
         assertEquals(100, first.get("limit").asInt());
@@ -298,14 +305,44 @@ class DashXIssueAssignmentTest {
         );
     }
 
+    private static String memberGroupResponse() {
+        return "{\"data\":{\"groupsList\":[" +
+            "{\"id\":\"" + GROUP_ID + "\",\"name\":\"Adjudicators\",\"accountKind\":\"MEMBER\"}" +
+            "]}}";
+    }
+
+    @Test
+    void listGroupMembersRejectsTheIdOfAUserGroup() {
+        responder = request ->
+            "{\"data\":{\"groupsList\":[" +
+            "{\"id\":\"" + GROUP_ID + "\",\"name\":\"Customers\",\"accountKind\":\"USER\"}]}}";
+
+        ExecutionException e = assertThrows(
+            ExecutionException.class,
+            () -> await(dashx.listGroupMembers(GROUP_ID))
+        );
+        assertInstanceOf(DashXException.class, e.getCause());
+        assertTrue(e.getCause().getMessage().contains("USER accounts, not members"));
+        assertEquals(1, requests.size(), "no accounts are listed for a non-member group");
+    }
+
+    @Test
+    void listGroupMembersRejectsAnUnknownId() {
+        responder = request -> "{\"data\":{\"groupsList\":[]}}";
+
+        ExecutionException e = assertThrows(
+            ExecutionException.class,
+            () -> await(dashx.listGroupMembers(GROUP_ID))
+        );
+        assertTrue(e.getCause().getMessage().contains("No member group with id"));
+    }
+
     @Test
     void listGroupMembersByNameResolvesTheMemberGroupFirst() throws Exception {
         responder = request -> {
             String query = request.get("query").asText();
             if (query.contains("groupsList")) {
-                return "{\"data\":{\"groupsList\":[" +
-                    "{\"id\":\"" + GROUP_ID + "\",\"name\":\"Adjudicators\",\"accountKind\":\"MEMBER\"}" +
-                    "]}}";
+                return memberGroupResponse();
             }
             return accountsPage(0, 3);
         };
@@ -336,6 +373,7 @@ class DashXIssueAssignmentTest {
             GROUP_ID,
             DashX.resolveMemberGroupId(
                 "Adjudicators",
+                false,
                 List.of(
                     group("66666666-6666-4666-8666-666666666666", AccountKind.USER),
                     group(GROUP_ID, AccountKind.MEMBER)
@@ -348,7 +386,7 @@ class DashXIssueAssignmentTest {
     void resolvingAnUnknownOrAmbiguousGroupNameFails() {
         DashXException missing = assertThrows(
             DashXException.class,
-            () -> DashX.resolveMemberGroupId("Nope", List.of())
+            () -> DashX.resolveMemberGroupId("Nope", false, List.of())
         );
         assertTrue(missing.getMessage().contains("No member group"));
 
@@ -357,6 +395,7 @@ class DashXIssueAssignmentTest {
             () ->
                 DashX.resolveMemberGroupId(
                     "Dup",
+                    false,
                     List.of(
                         group(GROUP_ID, AccountKind.MEMBER),
                         group("77777777-7777-4777-8777-777777777777", AccountKind.MEMBER)

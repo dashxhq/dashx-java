@@ -626,8 +626,9 @@ public class DashX {
      *
      * @param groupIdOrName The group's id, or its exact name among member groups.
      * @return A CompletableFuture with the group's members. Completes exceptionally with a
-     *         {@link DashXException} if no member group has that name, or more than one does, or
-     *         the group has 5,000 or more members (never a partial list).
+     *         {@link DashXException} if no member group has that id or name, the id belongs to a
+     *         user or visitor group, more than one member group has the name, or the group has
+     *         5,000 or more members (never a partial list).
      */
     public CompletableFuture<List<Account>> listGroupMembers(
         String groupIdOrName
@@ -642,12 +643,13 @@ public class DashX {
 
         ensureConfigured();
 
+        // Look the group up by id too, not just by name: a user or visitor group's id must not
+        // list non-member accounts as assignable agents.
         String key = groupIdOrName.trim();
-        Mono<String> groupId = UUID_PATTERN.matcher(key).matches()
-            ? Mono.just(key)
-            : groupService
-                .listGroups(Map.of("name", Map.of("eq", key)), null, null, null)
-                .map(groups -> resolveMemberGroupId(key, groups));
+        boolean byId = UUID_PATTERN.matcher(key).matches();
+        Mono<String> groupId = groupService
+            .listGroups(Map.of(byId ? "id" : "name", Map.of("eq", key)), null, null, null)
+            .map(groups -> resolveMemberGroupId(key, byId, groups));
 
         KeysetPager<Account> pager = new KeysetPager<>(
             "Group members",
@@ -667,19 +669,25 @@ public class DashX {
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
         );
 
-    static String resolveMemberGroupId(String name, List<Group> groups) {
+    static String resolveMemberGroupId(String key, boolean byId, List<Group> groups) {
         List<Group> memberGroups = groups
             .stream()
             .filter(group -> group.getAccountKind() == AccountKind.MEMBER)
             .toList();
         if (memberGroups.isEmpty()) {
-            throw new DashXException("No member group named '" + name + "'");
+            if (byId && !groups.isEmpty()) {
+                throw new DashXException(
+                    "Group " + key + " holds " + groups.get(0).getAccountKind() +
+                    " accounts, not members"
+                );
+            }
+            throw new DashXException(
+                "No member group " + (byId ? "with id " : "named ") + "'" + key + "'"
+            );
         }
         if (memberGroups.size() > 1) {
             throw new DashXException(
-                "More than one member group is named '" +
-                name +
-                "'; pass the group id instead"
+                "More than one member group is named '" + key + "'; pass the group id instead"
             );
         }
         return memberGroups.get(0).getId();
