@@ -378,7 +378,7 @@ class DashXIssueAssignmentTest {
         }
         if (query.contains("accountsList")) {
             return "{\"data\":{\"accountsList\":[" +
-                "{\"id\":\"" + ACTOR + "\",\"kind\":\"SERVICE\",\"name\":\"CNH backend\"}," +
+                "{\"id\":\"" + ACTOR + "\",\"kind\":\"SERVICE\",\"name\":\"Integration backend\"}," +
                 "{\"id\":\"" + JANE + "\",\"kind\":\"MEMBER\",\"name\":\"Jane\"}," +
                 "{\"id\":\"" + RAJ + "\",\"kind\":\"MEMBER\",\"name\":\"Raj\"}]}}";
         }
@@ -389,7 +389,7 @@ class DashXIssueAssignmentTest {
         }
         if (query.contains("groupsList")) {
             return "{\"data\":{\"groupsList\":[" +
-                "{\"id\":\"" + CARE + "\",\"name\":\"Care Team\",\"accountKind\":\"MEMBER\"}]}}";
+                "{\"id\":\"" + CARE + "\",\"name\":\"Support Team\",\"accountKind\":\"MEMBER\"}]}}";
         }
         return "{\"data\":{}}";
     }
@@ -413,7 +413,7 @@ class DashXIssueAssignmentTest {
         List<IssueActivity> history = await(dashx.getIssueActivity(ISSUE_ID));
 
         assertEquals(5, history.size());
-        assertEquals("CNH backend", history.get(0).getActor().getName());
+        assertEquals("Integration backend", history.get(0).getActor().getName());
         assertEquals("Jane", history.get(0).getToAssignee().getName());
 
         IssueActivity reassigned = history.get(1);
@@ -427,7 +427,7 @@ class DashXIssueAssignmentTest {
         assertEquals("Approved", approved.getToStatus().getName());
 
         assertNull(history.get(3).getFromGroup());
-        assertEquals("Care Team", history.get(3).getToGroup().getName());
+        assertEquals("Support Team", history.get(3).getToGroup().getName());
 
         assertEquals("LOW", history.get(4).getOldValue());
         assertEquals("HIGH", history.get(4).getNewValue());
