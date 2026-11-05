@@ -5,6 +5,7 @@ import com.dashx.graphql.generated.types.AggregateResponse;
 import com.dashx.graphql.generated.types.CreateIssueInput;
 import com.dashx.graphql.generated.types.Issue;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
+import com.dashx.graphql.utils.UpdateIssueInput;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,15 @@ public class IssueService {
                 spaceId
                 parentId
                 assigneeId
+                assignee {
+                    id
+                    kind
+                    email
+                    name
+                    fullName
+                    firstName
+                    lastName
+                }
                 groupId
                 title
                 description
@@ -107,6 +117,30 @@ public class IssueService {
             .execute(query, variables)
             .map(response ->
                 response.extractValueAsObject("upsertIssue", Issue.class)
+            );
+    }
+
+    /**
+     * Updates one issue by id, sending only the fields set on {@code input}. An explicit
+     * {@code null} (from a {@code clear...} call) clears that field; omitted fields are unchanged.
+     *
+     * @param input the partial update
+     * @return a Mono that emits the updated Issue
+     */
+    public Mono<Issue> updateIssue(UpdateIssueInput input) {
+        String query =
+            "mutation UpdateIssue($input: UpdateIssueInput!) { updateIssue(input: $input) " +
+            this.fullIssueProjection +
+            " }";
+
+        // A plain Map, never a generated POJO: the POJO would serialize every unset field as
+        // `null`, which `updateIssue` reads as "clear".
+        Map<String, Object> variables = Map.of("input", input.toVariables());
+
+        return client
+            .execute(query, variables)
+            .map(response ->
+                response.extractValueAsObject("updateIssue", Issue.class)
             );
     }
 

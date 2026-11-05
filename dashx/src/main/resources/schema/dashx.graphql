@@ -9,8 +9,18 @@ type Query {
     issuesList(filter: JSON, order: [JSON!], limit: Int, page: Int, targetEnvironment: String): [Issue!]!
     issuesAggregate(filter: JSON, targetEnvironment: String): AggregateResponse!
     searchRecords(input: SearchRecordsInput!): [JSON!]!
+    # Workspace members/service accounts (live environment) plus users/visitors (target
+    # environment). Accepts a `groupId: { eq | in }` filter for group membership.
+    accountsList(filter: JSON, order: [JSON!], limit: Int, page: Int): [Account!]!
+    groupsList(filter: JSON, order: [JSON!], limit: Int, page: Int): [Group!]!
+    issueStatusesList(filter: JSON, order: [JSON!], limit: Int, page: Int): [IssueStatus!]!
+    activitiesList(filter: JSON, order: [JSON!], limit: Int, page: Int): [Activity!]!
 }
 
+# `updateIssue` is deliberately NOT declared here. Codegen would emit an `UpdateIssueInput` POJO
+# that serializes every unset field as explicit `null`, and on `updateIssue` an explicit `null`
+# CLEARS the field (assignee, description, due date, group, parent). The SDK sends it through the
+# hand-written `com.dashx.graphql.utils.UpdateIssueInput`, which serializes only fields the caller set.
 type Mutation {
     identifyAccount(input: IdentifyAccountInput!): Account!
     trackEvent(input: TrackEventInput!): TrackEventResponse!
@@ -23,6 +33,7 @@ type Mutation {
 type Account {
     id: UUID!
     environmentId: UUID!
+    kind: AccountKind
     email: String
     phone: String
     fullName: String
@@ -70,6 +81,7 @@ type Issue {
     spaceId: UUID
     parentId: UUID
     assigneeId: UUID
+    assignee: Account
     groupId: UUID
     priority: IssuePriority
     title: String!
@@ -82,6 +94,36 @@ type Issue {
     dueAt: Timestamp
     number: Int!
     idempotencyKey: String
+}
+
+# One recorded change. `field` is e.g. STATUS, ASSIGNEE, GROUP, REQUESTED_BY, PRIORITY, TITLE;
+# `metadata` carries `{ "old_value": ..., "new_value": ... }`, ids for STATUS/ASSIGNEE/GROUP/
+# REQUESTED_BY. `actorType` is ACCOUNT, SYSTEM or INTEGRATION; a private-key write's actor is the
+# account that owns the key pair. The SDK resolves these ids into `com.dashx.model.IssueActivity`.
+type Activity {
+    id: UUID!
+    actorType: String!
+    actorId: UUID!
+    verb: String!
+    objectType: String!
+    objectId: UUID!
+    field: String
+    metadata: JSON
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
+    workspaceId: UUID!
+}
+
+type Group {
+    id: UUID!
+    environmentId: UUID!
+    workspaceId: UUID!
+    parentId: UUID
+    name: String!
+    position: Int!
+    accountKind: AccountKind!
+    createdAt: Timestamp!
+    updatedAt: Timestamp!
 }
 
 type IssueStatus {
@@ -155,7 +197,7 @@ input CreateIssueInput {
     title: String!
     description: String
     position: Int
-    properties: JSON!
+    properties: JSON
     labels: [String!]
     dueAt: Timestamp
     idempotencyKey: String
@@ -175,7 +217,7 @@ input UpsertIssueInput {
     title: String!
     description: String
     position: Int
-    properties: JSON!
+    properties: JSON
     labels: [String!]
     dueAt: Timestamp
     requestedBy: JSON
@@ -247,6 +289,13 @@ input CreateBroadcastInput {
     targetEnvironment: String
     custom: JSON
     campaignId: UUID
+}
+
+enum AccountKind {
+    MEMBER
+    SERVICE
+    USER
+    VISITOR
 }
 
 enum AssetProcessingStatus {

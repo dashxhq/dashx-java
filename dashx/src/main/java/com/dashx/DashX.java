@@ -6,10 +6,14 @@ import com.dashx.graphql.AccountService;
 import com.dashx.graphql.AssetService;
 import com.dashx.graphql.BroadcastService;
 import com.dashx.graphql.ConversationService;
+import com.dashx.exception.DashXException;
 import com.dashx.graphql.EventService;
+import com.dashx.graphql.GroupService;
+import com.dashx.graphql.IssueActivityService;
 import com.dashx.graphql.IssueService;
 import com.dashx.graphql.RecordService;
 import com.dashx.graphql.generated.types.Account;
+import com.dashx.graphql.generated.types.AccountKind;
 import com.dashx.graphql.generated.types.AggregateResponse;
 import com.dashx.graphql.generated.types.Asset;
 import com.dashx.graphql.generated.types.Broadcast;
@@ -23,7 +27,10 @@ import com.dashx.graphql.generated.types.StartInAppChatConversationInput;
 import com.dashx.graphql.generated.types.TrackEventInput;
 import com.dashx.graphql.generated.types.TrackEventResponse;
 import com.dashx.graphql.generated.types.UpsertIssueInput;
+import com.dashx.graphql.generated.types.Group;
 import com.dashx.graphql.utils.SearchRecordsOptions;
+import com.dashx.graphql.utils.UpdateIssueInput;
+import com.dashx.model.IssueActivity;
 import io.jsonwebtoken.Jwts;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -32,10 +39,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -68,6 +77,8 @@ public class DashX {
     private IssueService issueService;
     private BroadcastService broadcastService;
     private ConversationService conversationService;
+    private GroupService groupService;
+    private IssueActivityService issueActivityService;
 
     private DashX(String instanceName) {
         this.instanceName = instanceName;
@@ -129,6 +140,12 @@ public class DashX {
         this.issueService = new IssueService(graphqlClient);
         this.broadcastService = new BroadcastService(graphqlClient);
         this.conversationService = new ConversationService(graphqlClient);
+        this.groupService = new GroupService(graphqlClient);
+        this.issueActivityService = new IssueActivityService(
+            graphqlClient,
+            accountService,
+            groupService
+        );
     }
 
     private DashXGraphQLClient createGraphqlClient() {
@@ -493,6 +510,205 @@ public class DashX {
 
         logger.debug("Upserting issue");
         return issueService.upsertIssue(input).toFuture();
+    }
+
+    /**
+     * Updates one issue by id, sending only the fields set on {@code input}. Unlike
+     * {@link #upsertIssue}, this can clear fields (e.g. {@code clearAssignee()}), and can change
+     * the assignee and status in the same call.
+     *
+     * @param input The partial update, built with {@link UpdateIssueInput#newBuilder(String)}.
+     * @return A CompletableFuture that will be completed with the updated issue or completed
+     *         exceptionally if there are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<Issue> updateIssue(UpdateIssueInput input) {
+        if (input == null) {
+            return failedFuture(
+                new DashXValidationException("UpdateIssueInput cannot be null")
+            );
+        }
+
+        ensureConfigured();
+
+        logger.debug(
+            "Updating issue '{}' fields {}",
+            input.getId(),
+            input.getChanges().keySet()
+        );
+        return issueService.updateIssue(input).toFuture();
+    }
+
+    /**
+     * Fetches an issue's full history, oldest first, with the records each entry references
+     * resolved: the actor, and for assignee, status, group and requester changes the "from" and
+     * "to" objects (e.g. {@link IssueActivity#getToAssignee()}). Entries from private-key writes
+     * name the key pair's account as the actor.
+     *
+     * @param issueId The issue id.
+     * @return A CompletableFuture with the resolved entries, or completed exceptionally if there
+     *         are GraphQL errors or execution errors.
+     */
+    public CompletableFuture<List<IssueActivity>> getIssueActivity(
+        String issueId
+    ) {
+        if (isBlank(issueId)) {
+            return failedFuture(
+                new DashXValidationException("Issue ID cannot be null or empty")
+            );
+        }
+
+        ensureConfigured();
+
+        return issueActivityService.getIssueActivity(issueId).toFuture();
+    }
+
+    /**
+     * Lists accounts: workspace members and service accounts, plus the target environment's
+     * users and visitors. Filter by column (e.g. {@code {"email": {"eq": "..."}}}) or by group
+     * membership ({@code {"groupId": {"eq": "<uuid>"}}}).
+     */
+    public CompletableFuture<List<Account>> listAccounts(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order,
+        Integer limit,
+        Integer page
+    ) {
+        ensureConfigured();
+
+        return accountService
+            .listAccounts(filter, order, limit, page)
+            .toFuture();
+    }
+
+    public CompletableFuture<List<Account>> listAccounts(
+        Map<String, Object> filter
+    ) {
+        return listAccounts(filter, null, null, null);
+    }
+
+    /**
+     * Finds the workspace member (an agent who can be an assignee) with this exact email.
+     * Users or visitors sharing the email are ignored.
+     *
+     * @param email The member's email; matched exactly.
+     * @return A CompletableFuture with the member, or empty if no member has that email.
+     */
+    public CompletableFuture<Optional<Account>> findMemberByEmail(String email) {
+        if (isBlank(email)) {
+            return failedFuture(
+                new DashXValidationException("Email cannot be null or empty")
+            );
+        }
+
+        ensureConfigured();
+
+        Map<String, Object> filter = Map.of(
+            "email",
+            Map.of("eq", email.trim())
+        );
+        return accountService
+            .listAccounts(filter, null, 10, null)
+            .map(accounts ->
+                accounts
+                    .stream()
+                    .filter(account -> account.getKind() == AccountKind.MEMBER)
+                    .findFirst()
+            )
+            .toFuture();
+    }
+
+    private static final int GROUP_MEMBERS_PAGE_SIZE = 100;
+    private static final int GROUP_MEMBERS_MAX_PAGES = 50;
+
+    /**
+     * Lists every member of a group, e.g. the agents an issue in that group can be assigned to.
+     *
+     * @param groupIdOrName The group's id, or its exact name among member groups.
+     * @return A CompletableFuture with the group's members. Completes exceptionally with a
+     *         {@link DashXException} if no member group has that name, or more than one does.
+     */
+    public CompletableFuture<List<Account>> listGroupMembers(
+        String groupIdOrName
+    ) {
+        if (isBlank(groupIdOrName)) {
+            return failedFuture(
+                new DashXValidationException(
+                    "Group id or name cannot be null or empty"
+                )
+            );
+        }
+
+        ensureConfigured();
+
+        String key = groupIdOrName.trim();
+        Mono<String> groupId = UUID_PATTERN.matcher(key).matches()
+            ? Mono.just(key)
+            : groupService
+                .listGroups(Map.of("name", Map.of("eq", key)), null, null, null)
+                .map(groups -> resolveMemberGroupId(key, groups));
+
+        return groupId
+            .flatMap(id ->
+                listAllAccountPages(
+                    Map.of("groupId", Map.of("eq", id)),
+                    1,
+                    new ArrayList<>()
+                )
+            )
+            .toFuture();
+    }
+
+    private static final Pattern UUID_PATTERN =
+        Pattern.compile(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        );
+
+    static String resolveMemberGroupId(String name, List<Group> groups) {
+        List<Group> memberGroups = groups
+            .stream()
+            .filter(group -> group.getAccountKind() == AccountKind.MEMBER)
+            .toList();
+        if (memberGroups.isEmpty()) {
+            throw new DashXException("No member group named '" + name + "'");
+        }
+        if (memberGroups.size() > 1) {
+            throw new DashXException(
+                "More than one member group is named '" +
+                name +
+                "'; pass the group id instead"
+            );
+        }
+        return memberGroups.get(0).getId();
+    }
+
+    private Mono<List<Account>> listAllAccountPages(
+        Map<String, Object> filter,
+        int page,
+        List<Account> collected
+    ) {
+        // A fixed order so pages neither skip nor repeat accounts. `id` is not orderable on the
+        // server, so `createdAt` alone is the sort key.
+        List<Map<String, Object>> order = List.of(Map.of("createdAt", "asc"));
+        return accountService
+            .listAccounts(filter, order, GROUP_MEMBERS_PAGE_SIZE, page)
+            .flatMap(batch -> {
+                collected.addAll(batch);
+                if (
+                    batch.size() < GROUP_MEMBERS_PAGE_SIZE ||
+                    page >= GROUP_MEMBERS_MAX_PAGES
+                ) {
+                    return Mono.just(
+                        List.copyOf(collected)
+                    );
+                }
+                return listAllAccountPages(filter, page + 1, collected);
+            });
+    }
+
+    private static <T> CompletableFuture<T> failedFuture(Throwable error) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        future.completeExceptionally(error);
+        return future;
     }
 
     /**
