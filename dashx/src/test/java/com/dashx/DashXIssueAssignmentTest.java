@@ -217,10 +217,9 @@ class DashXIssueAssignmentTest {
     // ---- findMemberByEmail ----
 
     @Test
-    void findMemberByEmailIgnoresUsersWithTheSameEmail() throws Exception {
+    void findMemberByEmailFiltersOnMemberKindInTheQuery() throws Exception {
         responder = request ->
             "{\"data\":{\"accountsList\":[" +
-            "{\"id\":\"44444444-4444-4444-8444-444444444444\",\"kind\":\"USER\",\"email\":\"jane@example.com\"}," +
             "{\"id\":\"55555555-5555-4555-8555-555555555555\",\"kind\":\"MEMBER\",\"email\":\"jane@example.com\"}" +
             "]}}";
 
@@ -228,16 +227,17 @@ class DashXIssueAssignmentTest {
 
         assertTrue(member.isPresent());
         assertEquals("55555555-5555-4555-8555-555555555555", member.get().getId());
-        JsonNode filter = requests.get(0).get("variables").get("filter");
-        assertEquals("jane@example.com", filter.get("email").get("eq").asText());
+        // Users and visitors can share the email; filtering on kind server-side means any number
+        // of them can't crowd the member out of the result.
+        JsonNode variables = requests.get(0).get("variables");
+        assertEquals("jane@example.com", variables.get("filter").get("email").get("eq").asText());
+        assertEquals("MEMBER", variables.get("filter").get("kind").get("eq").asText());
+        assertEquals(1, variables.get("limit").asInt());
     }
 
     @Test
-    void findMemberByEmailIsEmptyWhenOnlyUsersMatch() throws Exception {
-        responder = request ->
-            "{\"data\":{\"accountsList\":[" +
-            "{\"id\":\"44444444-4444-4444-8444-444444444444\",\"kind\":\"USER\",\"email\":\"jane@example.com\"}" +
-            "]}}";
+    void findMemberByEmailIsEmptyWhenNoMemberMatches() throws Exception {
+        responder = request -> "{\"data\":{\"accountsList\":[]}}";
 
         assertTrue(await(dashx.findMemberByEmail("jane@example.com")).isEmpty());
     }
@@ -259,7 +259,8 @@ class DashXIssueAssignmentTest {
             if (i > 0) accounts.append(',');
             accounts.append(
                 String.format(
-                    "{\"id\":\"00000000-0000-4000-8000-%012d\",\"kind\":\"MEMBER\"}",
+                    "{\"id\":\"00000000-0000-4000-8000-%012d\",\"kind\":\"MEMBER\"," +
+                    "\"createdAt\":\"2026-11-05T10:00:00.000000Z\"}",
                     start + i
                 )
             );
@@ -269,10 +270,10 @@ class DashXIssueAssignmentTest {
 
     @Test
     void listGroupMembersByIdFiltersOnGroupIdAndPagesUntilAShortPage() throws Exception {
-        responder = request -> {
-            int page = request.get("variables").get("page").asInt();
-            return page == 1 ? accountsPage(0, 100) : accountsPage(100, 7);
-        };
+        responder = request ->
+            request.get("variables").get("filter").has("createdAt")
+                ? accountsPage(100, 7)
+                : accountsPage(0, 100);
 
         List<Account> members = await(dashx.listGroupMembers(GROUP_ID));
 
@@ -281,11 +282,20 @@ class DashXIssueAssignmentTest {
         JsonNode first = requests.get(0).get("variables");
         assertEquals(GROUP_ID, first.get("filter").get("groupId").get("eq").asText());
         assertEquals(100, first.get("limit").asInt());
-        assertEquals(1, first.get("page").asInt());
-        assertEquals(2, requests.get(1).get("variables").get("page").asInt());
+        assertFalse(first.has("page"), "pages by cursor, not offset");
         // Staging rejects `{"id": "asc"}` ("`id` is not orderable"); order by createdAt only.
         assertEquals(1, first.get("order").size());
         assertEquals("asc", first.get("order").get(0).get("createdAt").asText());
+
+        // The next request resumes at the last timestamp and excludes the 100 ids read there.
+        JsonNode second = requests.get(1).get("variables").get("filter");
+        assertEquals(GROUP_ID, second.get("groupId").get("eq").asText());
+        assertEquals("2026-11-05T10:00:00.000000Z", second.get("createdAt").get("gte").asText());
+        assertEquals(100, second.get("and").size());
+        assertEquals(
+            "00000000-0000-4000-8000-000000000000",
+            second.get("and").get(0).get("id").get("neq").asText()
+        );
     }
 
     @Test
@@ -475,7 +485,7 @@ class DashXIssueAssignmentTest {
         responder = request -> {
             String query = request.get("query").asText();
             if (!query.contains("activitiesList")) return historyResponder(request, "");
-            int page = request.get("variables").get("page").asInt();
+            int page = request.get("variables").get("filter").has("createdAt") ? 2 : 1;
             int count = page == 1 ? 100 : 3;
             List<String> entries = new ArrayList<>();
             for (int i = 0; i < count; i++) {

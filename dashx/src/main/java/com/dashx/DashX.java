@@ -11,6 +11,7 @@ import com.dashx.graphql.EventService;
 import com.dashx.graphql.GroupService;
 import com.dashx.graphql.IssueActivityService;
 import com.dashx.graphql.IssueService;
+import com.dashx.graphql.KeysetPager;
 import com.dashx.graphql.RecordService;
 import com.dashx.graphql.generated.types.Account;
 import com.dashx.graphql.generated.types.AccountKind;
@@ -546,7 +547,8 @@ public class DashX {
      *
      * @param issueId The issue id.
      * @return A CompletableFuture with the resolved entries, or completed exceptionally if there
-     *         are GraphQL errors or execution errors.
+     *         are GraphQL errors or execution errors, or with a {@link DashXException} if the
+     *         history has 5,000 or more entries (never a partial list).
      */
     public CompletableFuture<List<IssueActivity>> getIssueActivity(
         String issueId
@@ -602,18 +604,17 @@ public class DashX {
 
         ensureConfigured();
 
+        // Filter on kind in the query: users and visitors can share the email, and any number of
+        // them could come back ahead of the member.
         Map<String, Object> filter = Map.of(
             "email",
-            Map.of("eq", email.trim())
+            Map.of("eq", email.trim()),
+            "kind",
+            Map.of("eq", AccountKind.MEMBER.name())
         );
         return accountService
-            .listAccounts(filter, null, 10, null)
-            .map(accounts ->
-                accounts
-                    .stream()
-                    .filter(account -> account.getKind() == AccountKind.MEMBER)
-                    .findFirst()
-            )
+            .listAccounts(filter, null, 1, null)
+            .map(accounts -> accounts.stream().findFirst())
             .toFuture();
     }
 
@@ -625,7 +626,8 @@ public class DashX {
      *
      * @param groupIdOrName The group's id, or its exact name among member groups.
      * @return A CompletableFuture with the group's members. Completes exceptionally with a
-     *         {@link DashXException} if no member group has that name, or more than one does.
+     *         {@link DashXException} if no member group has that name, or more than one does, or
+     *         the group has 5,000 or more members (never a partial list).
      */
     public CompletableFuture<List<Account>> listGroupMembers(
         String groupIdOrName
@@ -647,14 +649,16 @@ public class DashX {
                 .listGroups(Map.of("name", Map.of("eq", key)), null, null, null)
                 .map(groups -> resolveMemberGroupId(key, groups));
 
+        KeysetPager<Account> pager = new KeysetPager<>(
+            "Group members",
+            GROUP_MEMBERS_PAGE_SIZE,
+            GROUP_MEMBERS_MAX_PAGES,
+            Account::getId,
+            Account::getCreatedAt,
+            (filter, order, limit) -> accountService.listAccounts(filter, order, limit, null)
+        );
         return groupId
-            .flatMap(id ->
-                listAllAccountPages(
-                    Map.of("groupId", Map.of("eq", id)),
-                    1,
-                    new ArrayList<>()
-                )
-            )
+            .flatMap(id -> pager.fetchAll(Map.of("groupId", Map.of("eq", id))))
             .toFuture();
     }
 
@@ -679,30 +683,6 @@ public class DashX {
             );
         }
         return memberGroups.get(0).getId();
-    }
-
-    private Mono<List<Account>> listAllAccountPages(
-        Map<String, Object> filter,
-        int page,
-        List<Account> collected
-    ) {
-        // A fixed order so pages neither skip nor repeat accounts. `id` is not orderable on the
-        // server, so `createdAt` alone is the sort key.
-        List<Map<String, Object>> order = List.of(Map.of("createdAt", "asc"));
-        return accountService
-            .listAccounts(filter, order, GROUP_MEMBERS_PAGE_SIZE, page)
-            .flatMap(batch -> {
-                collected.addAll(batch);
-                if (
-                    batch.size() < GROUP_MEMBERS_PAGE_SIZE ||
-                    page >= GROUP_MEMBERS_MAX_PAGES
-                ) {
-                    return Mono.just(
-                        List.copyOf(collected)
-                    );
-                }
-                return listAllAccountPages(filter, page + 1, collected);
-            });
     }
 
     private static <T> CompletableFuture<T> failedFuture(Throwable error) {

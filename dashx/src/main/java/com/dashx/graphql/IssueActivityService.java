@@ -78,36 +78,32 @@ public class IssueActivityService {
      * @return a Mono that emits the resolved entries
      */
     public Mono<List<IssueActivity>> getIssueActivity(String issueId) {
-        return listAllActivities(issueId, 1, new ArrayList<>()).flatMap(this::resolve);
+        return new KeysetPager<>(
+            "Issue history",
+            PAGE_SIZE,
+            MAX_PAGES,
+            Activity::getId,
+            Activity::getCreatedAt,
+            this::listActivities
+        )
+            .fetchAll(Map.of("objectId", Map.of("eq", issueId)))
+            .flatMap(this::resolve);
     }
 
-    private Mono<List<Activity>> listAllActivities(
-        String issueId,
-        int page,
-        List<Activity> collected
+    private Mono<List<Activity>> listActivities(
+        Map<String, Object> filter,
+        List<Map<String, Object>> order,
+        int limit
     ) {
         String query =
-            "query ListIssueActivities($filter: JSON, $order: [JSON!], $limit: Int, $page: Int) " +
-            "{ activitiesList(filter: $filter, order: $order, limit: $limit, page: $page) " +
+            "query ListIssueActivities($filter: JSON, $order: [JSON!], $limit: Int) " +
+            "{ activitiesList(filter: $filter, order: $order, limit: $limit) " +
             ACTIVITY_PROJECTION +
             " }";
-
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("filter", Map.of("objectId", Map.of("eq", issueId)));
-        // A fixed order so pages neither skip nor repeat entries. `id` is not orderable on the
-        // server, so `createdAt` alone is the sort key.
-        variables.put("order", List.of(Map.of("createdAt", "asc")));
-        variables.put("limit", PAGE_SIZE);
-        variables.put("page", page);
-
-        return client.execute(query, variables).flatMap(response -> {
+        Map<String, Object> variables = Map.of("filter", filter, "order", order, "limit", limit);
+        return client.execute(query, variables).map(response -> {
             Activity[] batch = response.extractValueAsObject("activitiesList", Activity[].class);
-            if (batch != null) collected.addAll(List.of(batch));
-            int size = batch == null ? 0 : batch.length;
-            if (size < PAGE_SIZE || page >= MAX_PAGES) {
-                return Mono.just(collected);
-            }
-            return listAllActivities(issueId, page + 1, collected);
+            return batch != null ? List.of(batch) : List.of();
         });
     }
 
