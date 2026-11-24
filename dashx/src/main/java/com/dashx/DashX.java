@@ -955,6 +955,7 @@ public class DashX {
      * @param expiresInSeconds token lifetime in seconds
      * @return the signed JWT
      * @throws DashXValidationException if {@code uid} is blank or {@code kind} is not USER/VISITOR
+     * @see #generateMemberToken(String)
      */
     public String generateIdentityToken(
         String uid,
@@ -977,7 +978,7 @@ public class DashX {
             !normalizedKind.equals("USER") && !normalizedKind.equals("VISITOR")
         ) {
             throw new DashXValidationException(
-                "kind must be \"USER\" or \"VISITOR\""
+                "kind must be \"USER\" or \"VISITOR\"; use generateMemberToken for a member"
             );
         }
 
@@ -1013,5 +1014,32 @@ public class DashX {
             "USER",
             DEFAULT_IDENTITY_TOKEN_EXPIRY_SECONDS
         );
+    }
+
+    /**
+     * Generates a member identity token. The browser SDK connects with it to keep that workspace
+     * member online in DashX while they work in your app, so assignment rules that only assign to
+     * people who are online can give them issues. The DashX API mints it, resolving the member and
+     * the environment the token is bound to.
+     *
+     * @param memberEmailOrAccountId the member's email or DashX account id
+     * @return A CompletableFuture with the token, valid for 12 hours. Completes exceptionally with a
+     *         {@link DashXException} if no enabled member of the workspace has that email or id, or if
+     *         several enabled members share the email (pass the account id instead).
+     */
+    public CompletableFuture<String> generateMemberToken(String memberEmailOrAccountId) {
+        if (isBlank(memberEmailOrAccountId)) {
+            return failedFuture(
+                new DashXValidationException(
+                    "Member email or account id cannot be null or empty"
+                )
+            );
+        }
+
+        ensureConfigured();
+
+        return accountService
+            .generateMemberToken(publicKey, privateKey, memberEmailOrAccountId.trim())
+            .toFuture();
     }
 }

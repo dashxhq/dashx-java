@@ -95,4 +95,29 @@ public class AccountService {
             return accounts != null ? List.of(accounts) : List.of();
         });
     }
+
+    /**
+     * Mints a member identity token. The server resolves {@code uid}, an account id or email, to one
+     * enabled member of the workspace and signs the token for that member's environment.
+     *
+     * @param publicKey the workspace's public key
+     * @param privateKey the workspace's private key
+     * @param uid the member's account id or email
+     * @return a Mono that emits the signed token
+     */
+    public Mono<String> generateMemberToken(String publicKey, String privateKey, String uid) {
+        String query =
+                "query GenerateIdentityToken($input: GenerateIdentityTokenInput!) "
+                        + "{ generateIdentityToken(input: $input) { token } }";
+
+        Map<String, Object> input = Map.of(
+                "publicKey", publicKey,
+                "privateKey", privateKey,
+                "kind", "MEMBER",
+                "uid", uid);
+
+        return client.execute(query, Map.of("input", input))
+                .map(response -> response.extractValueAsObject(
+                        "generateIdentityToken.token", String.class));
+    }
 }
